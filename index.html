@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест для Tesla</title>
+<style>
+  :root { --bg:#14171a; --fg:#e8eaec; --ok:#4cc38a; --bad:#e5604d; --line:#2a2f35; }
+  * { box-sizing: border-box; }
+  html, body { height:100%; margin:0; background:var(--bg); color:var(--fg);
+    font-family: system-ui, sans-serif; font-size:20px; }
+  body { display:flex; flex-direction:column; }
+  #panel { padding:14px 18px; border-bottom:1px solid var(--line); display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:10px; }
+  .row { padding:8px 0; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); }
+  button { font-size:20px; padding:14px 22px; border-radius:10px; border:1px solid var(--line);
+    background:#22272d; color:var(--fg); }
+  #map { flex:1; min-height:300px; }
+  #nomap { padding:18px; color:#9aa3ab; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <div class="row" id="geo">Геопозиция: проверяю…</div>
+  <div class="row" id="spd">Скорость: —</div>
+  <div class="row" id="ua">Браузер: —</div>
+  <div class="row"><button id="say">Проверить голос</button> <span id="sayres"></span></div>
+</div>
+<div id="map"></div>
+
+<script>
+  // Ключ Яндекс Карт. Пока пусто — карта не загрузится, остальные проверки работают.
+  var YANDEX_KEY = "";
+
+  document.getElementById("ua").textContent = "Браузер: " + navigator.userAgent;
+
+  var geo = document.getElementById("geo"), spd = document.getElementById("spd");
+  var map, mark;
+
+  function onPos(p) {
+    var c = p.coords;
+    geo.innerHTML = '<span class="ok">Геопозиция работает</span><br>' +
+      c.latitude.toFixed(5) + ", " + c.longitude.toFixed(5) +
+      "<br>точность ±" + Math.round(c.accuracy) + " м";
+    spd.textContent = "Скорость: " + (c.speed != null ? Math.round(c.speed * 3.6) + " км/ч" : "нет данных");
+    if (map) {
+      var pt = [c.latitude, c.longitude];
+      if (!mark) { mark = new ymaps.Placemark(pt); map.geoObjects.add(mark); map.setCenter(pt, 16); }
+      else mark.geometry.setCoordinates(pt);
+    }
+  }
+  function onErr(e) { geo.innerHTML = '<span class="bad">Геопозиция не работает: ' + e.message + "</span>"; }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy:true, maximumAge:1000 });
+  } else { onErr({ message:"API недоступен" }); }
+
+  document.getElementById("say").onclick = function () {
+    var r = document.getElementById("sayres");
+    if (!("speechSynthesis" in window)) { r.innerHTML = '<span class="bad">озвучка не поддерживается</span>'; return; }
+    var u = new SpeechSynthesisUtterance("Через двести метров поворот направо");
+    u.lang = "ru-RU";
+    speechSynthesis.speak(u);
+    r.innerHTML = '<span class="ok">команда отправлена — слышно?</span>';
+  };
+
+  if (YANDEX_KEY) {
+    var s = document.createElement("script");
+    s.src = "https://api-maps.yandex.ru/2.1/?apikey=" + YANDEX_KEY + "&lang=ru_RU";
+    s.onload = function () {
+      ymaps.ready(function () {
+        map = new ymaps.Map("map", { center:[41.7151, 44.8271], zoom:12, controls:["zoomControl"] });
+      });
+    };
+    document.head.appendChild(s);
+  } else {
+    document.getElementById("map").innerHTML = '<div id="nomap">Ключ Яндекс Карт пока не вставлен — карта не показана.</div>';
+  }
+</script>
+</body>
+</html>
