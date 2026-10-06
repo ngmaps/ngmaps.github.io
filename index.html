@@ -25,6 +25,9 @@
   #route { background:var(--blue); border-color:var(--blue); color:#fff; }
   #cancel { background:var(--red); border-color:var(--red); color:#fff; }
   ymaps[class*="suggest"] { font-size:20px; }
+  #view { position:fixed; inset:0; z-index:20; background:var(--bg); display:none; }
+  #view iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  #back { top:12px; left:12px; z-index:21; }
 </style>
 </head>
 <body>
@@ -43,6 +46,11 @@
   </div>
   <button id="route">Start route</button>
   <button id="cancel">Cancel</button>
+</div>
+
+<div id="view">
+  <iframe id="frame" title="Route" allow="geolocation"></iframe>
+  <button id="back" class="card">Back</button>
 </div>
 
 <script>
@@ -123,13 +131,19 @@
     say("");
   }
 
-  // Opens the route in Yandex Maps (real Yandex route with traffic and ETA)
+  // Shows the Yandex route inside this page (embedded Yandex map widget)
   function startRoute() {
     if (!dest) return;
-    var from = mePoint ? mePoint[0] + "," + mePoint[1] : "";
-    var url = "https://yandex.com/maps/?rtext=" + from + "~" + dest[0] + "," + dest[1] + "&rtt=auto";
-    window.location.href = url;
+    if (!mePoint) { say("No location yet: cannot set the route start"); return; }
+    var url = "https://yandex.ru/map-widget/v1/?rtext=" + mePoint[0] + "," + mePoint[1] + "~" +
+              dest[0] + "," + dest[1] + "&rtt=auto&z=13";
+    $("frame").src = url;
+    $("view").style.display = "block";
   }
+  $("back").onclick = function () {
+    $("view").style.display = "none";
+    $("frame").src = "about:blank";
+  };
 
   var s = document.createElement("script");
   s.src = "https://api-maps.yandex.ru/2.1/?apikey=" + KEY + "&suggest_apikey=" + SUGGEST_KEY + "&lang=" + LANG;
