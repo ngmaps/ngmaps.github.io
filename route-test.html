@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route test</title>
+<style>
+  body { margin:0; background:#14171a; color:#e8eaec; font:17px system-ui, sans-serif; }
+  #log { padding:12px 14px; white-space:pre-wrap; word-break:break-all; }
+  #map { height:55vh; }
+  .ok { color:#4cc38a; } .bad { color:#e5604d; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<div id="map"></div>
+
+<script>
+  var KEY = "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
+  var SUGGEST_KEY = "f382b839-b555-4f50-82b6-7b45bb9769d5";
+  var q = new URLSearchParams(location.search);
+  var lang = q.get("lang") || "ru_RU";
+  var withSuggest = !!q.get("suggest");
+
+  var logEl = document.getElementById("log");
+  function log(t, cls) {
+    var d = document.createElement("div");
+    if (cls) d.className = cls;
+    d.textContent = t;
+    logEl.appendChild(d);
+  }
+
+  // Catches any script that failed to load (including the router request) and shows its URL
+  window.addEventListener("error", function (e) {
+    if (e.target && e.target.tagName === "SCRIPT") log("SCRIPT FAILED: " + e.target.src, "bad");
+    else if (e.message) log("JS error: " + e.message, "bad");
+  }, true);
+
+  var src = "https://api-maps.yandex.ru/2.1/?apikey=" + KEY + "&lang=" + lang +
+            (withSuggest ? "&suggest_apikey=" + SUGGEST_KEY : "");
+  log("Loading: " + src.replace(KEY, "KEY"));
+  log("Page: " + location.href);
+
+  var s = document.createElement("script");
+  s.src = src;
+  s.onerror = function () { log("Map API failed to load", "bad"); };
+  s.onload = function () {
+    ymaps.ready(function () {
+      log("Map API loaded", "ok");
+      var map = new ymaps.Map("map", { center:[41.7151, 44.8271], zoom:12, controls:["zoomControl"] });
+      var mr = new ymaps.multiRouter.MultiRoute(
+        { referencePoints:[[41.7151, 44.8271], [41.7225, 44.7925]], params:{ routingMode:"auto", results:3 } },
+        { boundsAutoApply:true }
+      );
+      map.geoObjects.add(mr);
+      mr.model.events.add("requestsuccess", function () {
+        var routes = mr.getRoutes(), n = routes.getLength();
+        log("ROUTE OK, alternatives: " + n, "ok");
+        for (var i = 0; i < n; i++) {
+          var p = routes.get(i).properties;
+          var t = p.get("durationInTraffic") || p.get("duration");
+          log("  #" + (i + 1) + ": " + t.text + ", " + p.get("distance").text);
+        }
+      });
+      mr.model.events.add("requestfail", function (e) {
+        var er = e.get("error");
+        log("ROUTE FAILED: " + (er && er.message ? er.message : JSON.stringify(er)), "bad");
+      });
+    });
+  };
+  document.head.appendChild(s);
+</script>
+</body>
+</html>
