@@ -1,155 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Navigation</title>
-<style>
-  :root { --bg:#14171a; --fg:#e8eaec; --mut:#9aa3ab; --line:#2f363d; --blue:#3b8cf0; --red:#e5604d; }
-  * { box-sizing:border-box; }
-  html, body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; }
-  #map { position:absolute; inset:0; }
-  .card { position:absolute; background:var(--bg); border:1px solid var(--line); border-radius:12px; }
-  #top { top:12px; left:12px; right:12px; display:flex; gap:10px; padding:10px; z-index:5; max-width:760px; }
-  #q { flex:1; font-size:22px; padding:12px 14px; border-radius:8px; border:1px solid var(--line);
-       background:#22272d; color:var(--fg); min-width:0; }
-  button { font-size:20px; padding:12px 20px; border-radius:8px; border:1px solid var(--line);
-           background:#22272d; color:var(--fg); }
-  #go { background:var(--blue); border-color:var(--blue); color:#fff; }
-  #msg { top:96px; left:12px; padding:10px 14px; font-size:18px; color:var(--mut); display:none; z-index:5; max-width:700px; }
-  #me { right:12px; top:96px; z-index:5; }
-  #info { left:12px; right:12px; bottom:12px; padding:14px 18px; display:none; gap:14px; align-items:center; z-index:5; max-width:760px; }
-  #info .main { flex:1; min-width:0; }
-  #name { font-size:22px; font-weight:500; }
-  #desc { font-size:16px; color:var(--mut); margin-top:2px; }
-  #route { background:var(--blue); border-color:var(--blue); color:#fff; }
-  #cancel { background:var(--red); border-color:var(--red); color:#fff; }
-  ymaps[class*="suggest"] { font-size:20px; }
-  #view { position:fixed; inset:0; z-index:20; background:var(--bg); display:none; }
-  #view iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
-  #back { top:12px; left:12px; z-index:21; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0,
+                   maximum-scale=1.0,
+                   user-scalable=no">
+
+    <title>Tesla Navigation</title>
+
+    <!-- Yandex Maps JavaScript API 3.0 -->
+    <script src="https://api-maps.yandex.ru/v3/?apikey=fc5db2c9-c6bd-49fe-9ab7-71d08afae06a&lang=en_US"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #111;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        #top {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+
+            display: flex;
+            gap: 10px;
+        }
+
+        #status {
+            position: fixed;
+            bottom: 25px;
+            left: 20px;
+            z-index: 1000;
+
+            background: rgba(0,0,0,0.75);
+            color: white;
+
+            padding: 12px 18px;
+            border-radius: 12px;
+
+            font-size: 18px;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+
+            background: white;
+            color: black;
+
+            font-size: 18px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        #locationButton {
+            position: fixed;
+            right: 20px;
+            bottom: 25px;
+
+            width: 65px;
+            height: 65px;
+
+            padding: 0;
+
+            border-radius: 50%;
+
+            font-size: 28px;
+
+            z-index: 1000;
+        }
+    </style>
 </head>
+
 <body>
+
 <div id="map"></div>
 
-<div id="top" class="card">
-  <input id="q" type="text" placeholder="Where to?" autocomplete="off">
-  <button id="go">Search</button>
-</div>
-<div id="msg" class="card"></div>
-<button id="me" class="card" aria-label="My location">My location</button>
-<div id="info" class="card">
-  <div class="main">
-    <div id="name"></div>
-    <div id="desc"></div>
-  </div>
-  <button id="route">Start route</button>
-  <button id="cancel">Cancel</button>
+<div id="top">
+    <button onclick="findMyLocation()">📍 My location</button>
 </div>
 
-<div id="view">
-  <iframe id="frame" title="Route" allow="geolocation"></iframe>
-  <button id="back" class="card">Back</button>
+<div id="status">
+    Initializing...
 </div>
+
+<button id="locationButton"
+        onclick="findMyLocation()">
+    📍
+</button>
+
 
 <script>
-  var KEY = "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
-  var SUGGEST_KEY = "f382b839-b555-4f50-82b6-7b45bb9769d5";
-  var GEO_KEY = "55379b3b-a1e2-45b3-b313-b8d446e39970";
-  var LANG = "en_US";
 
-  var map, mePoint = null, meMark = null, destMark = null, dest = null, follow = true;
-  var $ = function (id) { return document.getElementById(id); };
+let map;
+let myPosition = null;
 
-  function say(t) {
-    var m = $("msg");
-    if (!t) { m.style.display = "none"; return; }
-    m.textContent = t; m.style.display = "block";
-  }
+async function initMap() {
 
-  function init() {
-    map = new ymaps.Map("map", { center:[41.7151, 44.8271], zoom:12, controls:["zoomControl", "trafficControl"] });
-    new ymaps.SuggestView("q");
+    try {
 
-    navigator.geolocation.watchPosition(function (p) {
-      mePoint = [p.coords.latitude, p.coords.longitude];
-      if (!meMark) {
-        meMark = new ymaps.Placemark(mePoint, {}, { preset:"islands#geolocationIcon" });
-        map.geoObjects.add(meMark);
-        map.setCenter(mePoint, 15);
-      } else {
-        meMark.geometry.setCoordinates(mePoint);
-        if (follow && !dest) map.setCenter(mePoint);
-      }
-    }, function (e) { say("No location: " + e.message); },
-    { enableHighAccuracy:true, maximumAge:1000 });
+        document.getElementById("status").innerText =
+            "Loading Yandex Maps...";
 
-    $("go").onclick = search;
-    $("q").onkeydown = function (e) { if (e.key === "Enter") search(); };
-    $("me").onclick = function () { follow = true; if (mePoint) map.setCenter(mePoint, 16); };
-    $("cancel").onclick = clearDest;
-    $("route").onclick = startRoute;
-    map.events.add("actionbegin", function () { follow = false; });
-  }
+        await ymaps3.ready;
 
-  function search() {
-    var text = $("q").value.trim();
-    if (!text) { say("Enter an address or place"); return; }
-    say("Searching…");
-    var c = mePoint || map.getCenter();
-    var url = "https://geocode-maps.yandex.ru/1.x/?format=json&results=1&lang=" + LANG +
-      "&apikey=" + GEO_KEY + "&ll=" + c[1] + "," + c[0] + "&spn=0.5,0.5" +
-      "&geocode=" + encodeURIComponent(text);
-    fetch(url).then(function (resp) {
-      if (!resp.ok) throw new Error("Geocoder responded with code " + resp.status);
-      return resp.json();
-    }).then(function (d) {
-      var m = d.response.GeoObjectCollection.featureMember;
-      if (!m.length) { say("Nothing found. Refine the address."); return; }
-      var g = m[0].GeoObject, pos = g.Point.pos.split(" ");
-      say("");
-      showDest([parseFloat(pos[1]), parseFloat(pos[0])], g.name, g.description || "");
-    }).catch(function (e) { say("Search error: " + e.message); });
-  }
+        const {
+            YMap,
+            YMapDefaultSchemeLayer
+        } = ymaps3;
 
-  function showDest(pt, name, desc) {
-    clearDest();
-    dest = pt;
-    destMark = new ymaps.Placemark(pt, {}, { preset:"islands#redDotIcon" });
-    map.geoObjects.add(destMark);
-    map.setCenter(pt, 15);
-    $("name").textContent = name;
-    $("desc").textContent = desc;
-    $("info").style.display = "flex";
-  }
+        map = new YMap(
+            document.getElementById("map"),
+            {
+                location: {
+                    center: [44.8015, 41.6938],
+                    zoom: 12
+                }
+            }
+        );
 
-  function clearDest() {
-    if (destMark) { map.geoObjects.remove(destMark); destMark = null; }
-    dest = null;
-    $("info").style.display = "none";
-    say("");
-  }
+        map.addChild(
+            new YMapDefaultSchemeLayer()
+        );
 
-  // Shows the Yandex route inside this page (embedded Yandex map widget)
-  function startRoute() {
-    if (!dest) return;
-    if (!mePoint) { say("No location yet: cannot set the route start"); return; }
-    var url = "https://yandex.ru/map-widget/v1/?rtext=" + mePoint[0] + "," + mePoint[1] + "~" +
-              dest[0] + "," + dest[1] + "&rtt=auto&z=13";
-    $("frame").src = url;
-    $("view").style.display = "block";
-  }
-  $("back").onclick = function () {
-    $("view").style.display = "none";
-    $("frame").src = "about:blank";
-  };
+        document.getElementById("status").innerText =
+            "Yandex Maps ready";
 
-  var s = document.createElement("script");
-  s.src = "https://api-maps.yandex.ru/2.1/?apikey=" + KEY + "&suggest_apikey=" + SUGGEST_KEY + "&lang=" + LANG;
-  s.onload = function () { ymaps.ready(init); };
-  s.onerror = function () { say("Map failed to load"); };
-  document.head.appendChild(s);
+        findMyLocation();
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("status").innerText =
+            "Yandex Maps ERROR";
+
+    }
+}
+
+
+function findMyLocation() {
+
+    if (!navigator.geolocation) {
+
+        document.getElementById("status").innerText =
+            "GPS is not supported";
+
+        return;
+    }
+
+    document.getElementById("status").innerText =
+        "Getting GPS position...";
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            myPosition = [lon, lat];
+
+            console.log(
+                "GPS:",
+                lat,
+                lon
+            );
+
+            map.setLocation({
+                center: [lon, lat],
+                zoom: 16,
+                duration: 500
+            });
+
+            document.getElementById("status").innerText =
+                "GPS: " +
+                lat.toFixed(6) +
+                ", " +
+                lon.toFixed(6);
+
+        },
+
+        function(error) {
+
+            console.error(error);
+
+            let message = "GPS error";
+
+            if (error.code === 1) {
+                message =
+                    "GPS permission denied";
+            }
+
+            if (error.code === 2) {
+                message =
+                    "GPS position unavailable";
+            }
+
+            if (error.code === 3) {
+                message =
+                    "GPS timeout";
+            }
+
+            document.getElementById("status").innerText =
+                message;
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 5000
+        }
+    );
+}
+
+
+initMap();
+
 </script>
+
 </body>
 </html>
