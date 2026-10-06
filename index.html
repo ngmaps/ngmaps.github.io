@@ -47,6 +47,7 @@
 <script>
   var KEY = "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
   var SUGGEST_KEY = "f382b839-b555-4f50-82b6-7b45bb9769d5";
+  var GEO_KEY = "55379b3b-a1e2-45b3-b313-b8d446e39970";
 
   var map, mePoint = null, meMark = null, route = null, follow = true;
   var $ = function (id) { return document.getElementById(id); };
@@ -85,12 +86,20 @@
     var text = $("q").value.trim();
     if (!text) { say("Введите адрес или место"); return; }
     say(mePoint ? "Ищу…" : "Геопозиции нет, маршрут от центра карты. Ищу…");
-    ymaps.geocode(text, { results:1, boundedBy:map.getBounds() }).then(function (r) {
-      var obj = r.geoObjects.get(0);
-      if (!obj) { say("Ничего не найдено. Уточните адрес."); return; }
+    var c = mePoint || map.getCenter();
+    var url = "https://geocode-maps.yandex.ru/1.x/?format=json&results=1&lang=ru_RU" +
+      "&apikey=" + GEO_KEY + "&ll=" + c[1] + "," + c[0] + "&spn=0.5,0.5" +
+      "&geocode=" + encodeURIComponent(text);
+    fetch(url).then(function (resp) {
+      if (!resp.ok) throw new Error("Геокодер ответил кодом " + resp.status);
+      return resp.json();
+    }).then(function (d) {
+      var m = d.response.GeoObjectCollection.featureMember;
+      if (!m.length) { say("Ничего не найдено. Уточните адрес."); return; }
+      var pos = m[0].GeoObject.Point.pos.split(" ");
       say("");
-      buildRoute(obj.geometry.getCoordinates());
-    }, function () { say("Не удалось выполнить поиск. Проверьте ключ Геокодера."); });
+      buildRoute([parseFloat(pos[1]), parseFloat(pos[0])]);
+    }).catch(function (e) { say("Ошибка поиска: " + e.message); });
   }
 
   function buildRoute(dest) {
