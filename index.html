@@ -119,7 +119,11 @@
       $("next").textContent = seg ? "Далее: " + seg.properties.get("text") : "";
       $("info").style.display = "flex";
     });
-    route.model.events.add("requestfail", function () { say("Маршрут не построен"); });
+    route.model.events.add("requestfail", function (e) {
+      var er = e.get("error");
+      console.log("route error", er);
+      say("Маршрут не построен: " + (er && er.message ? er.message : "причина неизвестна"));
+    });
   }
 
   function clearRoute() {
