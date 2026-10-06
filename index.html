@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport"
           content="width=device-width,
                    initial-scale=1.0,
                    maximum-scale=1.0,
                    user-scalable=no">
 
-    <title>Tesla Navigation</title>
+    <title>Tesla Yandex Navigation</title>
 
     <!-- Yandex Maps JavaScript API 3.0 -->
     <script src="https://api-maps.yandex.ru/v3/?apikey=fc5db2c9-c6bd-49fe-9ab7-71d08afae06a&lang=en_US"></script>
@@ -18,7 +19,8 @@
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -29,69 +31,211 @@
         }
 
         #map {
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            inset: 0;
         }
 
-        #top {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 1000;
+        /* SEARCH PANEL */
 
+        #searchPanel {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+
+            z-index: 1000;
+        }
+
+        #searchRow {
             display: flex;
             gap: 10px;
         }
 
-        #status {
-            position: fixed;
-            bottom: 25px;
-            left: 20px;
-            z-index: 1000;
+        #searchInput {
+            flex: 1;
 
-            background: rgba(0,0,0,0.75);
-            color: white;
+            height: 60px;
 
-            padding: 12px 18px;
-            border-radius: 12px;
-
-            font-size: 18px;
-        }
-
-        button {
             border: none;
-            border-radius: 12px;
-            padding: 15px 20px;
+            outline: none;
+
+            border-radius: 14px;
+
+            padding: 0 20px;
+
+            font-size: 20px;
 
             background: white;
-            color: black;
+
+            box-shadow:
+                0 3px 12px rgba(0,0,0,.25);
+        }
+
+        #searchButton {
+            width: 100px;
+
+            border: none;
+            border-radius: 14px;
+
+            background: #111;
+            color: white;
 
             font-size: 18px;
             font-weight: bold;
+        }
+
+        /* RESULTS */
+
+        #results {
+            margin-top: 10px;
+
+            background: white;
+
+            border-radius: 14px;
+
+            overflow: hidden;
+
+            display: none;
+
+            max-height: 420px;
+
+            box-shadow:
+                0 4px 15px rgba(0,0,0,.3);
+        }
+
+        .result {
+            padding: 18px;
+
+            border-bottom: 1px solid #ddd;
+
+            font-size: 18px;
 
             cursor: pointer;
         }
 
-        button:active {
-            transform: scale(0.97);
+        .result:last-child {
+            border-bottom: none;
+        }
+
+        .result:active {
+            background: #eee;
+        }
+
+        .resultTitle {
+            font-weight: bold;
+        }
+
+        .resultAddress {
+            margin-top: 5px;
+
+            color: #666;
+
+            font-size: 15px;
+        }
+
+        /* BOTTOM */
+
+        #bottomPanel {
+            position: fixed;
+
+            left: 18px;
+            right: 18px;
+            bottom: 18px;
+
+            z-index: 1000;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            pointer-events: none;
+        }
+
+        #status {
+            background: rgba(0,0,0,.82);
+
+            color: white;
+
+            border-radius: 14px;
+
+            padding: 14px 18px;
+
+            font-size: 17px;
+
+            max-width: 70%;
+
+            pointer-events: auto;
         }
 
         #locationButton {
-            position: fixed;
-            right: 20px;
-            bottom: 25px;
+            width: 64px;
+            height: 64px;
 
-            width: 65px;
-            height: 65px;
-
-            padding: 0;
+            border: none;
 
             border-radius: 50%;
 
-            font-size: 28px;
+            background: white;
+
+            font-size: 27px;
+
+            box-shadow:
+                0 3px 12px rgba(0,0,0,.35);
+
+            pointer-events: auto;
+        }
+
+        /* SELECTED DESTINATION */
+
+        #destination {
+            position: fixed;
+
+            left: 18px;
+            right: 18px;
+            bottom: 95px;
 
             z-index: 1000;
+
+            display: none;
+
+            background: white;
+
+            border-radius: 16px;
+
+            padding: 18px;
+
+            box-shadow:
+                0 4px 15px rgba(0,0,0,.35);
+        }
+
+        #destinationName {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #destinationAddress {
+            margin-top: 6px;
+
+            color: #666;
+
+            font-size: 15px;
+        }
+
+        #clearDestination {
+            margin-top: 12px;
+
+            width: 100%;
+
+            height: 48px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: #111;
+            color: white;
+
+            font-size: 17px;
         }
     </style>
 </head>
@@ -100,144 +244,767 @@
 
 <div id="map"></div>
 
-<div id="top">
-    <button onclick="findMyLocation()">📍 My location</button>
+
+<!-- SEARCH -->
+
+<div id="searchPanel">
+
+    <div id="searchRow">
+
+        <input
+            id="searchInput"
+            type="search"
+            placeholder="Where to?"
+            autocomplete="off"
+            enterkeyhint="search"
+        >
+
+        <button id="searchButton">
+            SEARCH
+        </button>
+
+    </div>
+
+    <div id="results"></div>
+
 </div>
 
-<div id="status">
-    Initializing...
+
+<!-- DESTINATION -->
+
+<div id="destination">
+
+    <div id="destinationName"></div>
+
+    <div id="destinationAddress"></div>
+
+    <button id="clearDestination">
+        CLEAR
+    </button>
+
 </div>
 
-<button id="locationButton"
-        onclick="findMyLocation()">
-    📍
-</button>
+
+<!-- BOTTOM -->
+
+<div id="bottomPanel">
+
+    <div id="status">
+        Loading Yandex Maps...
+    </div>
+
+    <button id="locationButton">
+        📍
+    </button>
+
+</div>
 
 
 <script>
 
-let map;
+let map = null;
+
 let myPosition = null;
+
+let destinationPosition = null;
+
+let destinationMarker = null;
+
+let suggestTimer = null;
+
+
+/*
+    IMPORTANT
+
+    JavaScript API key:
+    fc5db2c9...
+
+    Geosuggest API key:
+    f382...
+*/
+
+const SUGGEST_API_KEY =
+    "f382b839-b555-4f50-82b6-7b45bb9769d5";
+
+
+/* DOM */
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const searchButton =
+    document.getElementById("searchButton");
+
+const results =
+    document.getElementById("results");
+
+const status =
+    document.getElementById("status");
+
+const destination =
+    document.getElementById("destination");
+
+const destinationName =
+    document.getElementById("destinationName");
+
+const destinationAddress =
+    document.getElementById("destinationAddress");
+
+const locationButton =
+    document.getElementById("locationButton");
+
+const clearDestination =
+    document.getElementById("clearDestination");
+
+
+/* MAP */
 
 async function initMap() {
 
     try {
 
-        document.getElementById("status").innerText =
+        status.innerText =
             "Loading Yandex Maps...";
 
         await ymaps3.ready;
 
+        /*
+            Configure Geosuggest API key
+        */
+
+        ymaps3
+            .getDefaultConfig()
+            .setApikeys({
+                suggest: SUGGEST_API_KEY
+            });
+
+
         const {
             YMap,
-            YMapDefaultSchemeLayer
+            YMapDefaultSchemeLayer,
+            YMapDefaultFeaturesLayer
         } = ymaps3;
+
 
         map = new YMap(
             document.getElementById("map"),
             {
                 location: {
-                    center: [44.8015, 41.6938],
+                    center: [
+                        44.8015,
+                        41.6938
+                    ],
                     zoom: 12
                 }
             }
         );
 
+
         map.addChild(
             new YMapDefaultSchemeLayer()
         );
 
-        document.getElementById("status").innerText =
+
+        map.addChild(
+            new YMapDefaultFeaturesLayer({
+                zIndex: 1800
+            })
+        );
+
+
+        status.innerText =
             "Yandex Maps ready";
 
-        findMyLocation();
+
+        getMyLocation();
 
     } catch (error) {
 
         console.error(error);
 
-        document.getElementById("status").innerText =
-            "Yandex Maps ERROR";
+        status.innerText =
+            "Yandex Maps error";
 
     }
+
 }
 
 
-function findMyLocation() {
+/* GPS */
+
+function getMyLocation() {
 
     if (!navigator.geolocation) {
 
-        document.getElementById("status").innerText =
+        status.innerText =
             "GPS is not supported";
 
         return;
     }
 
-    document.getElementById("status").innerText =
+
+    status.innerText =
         "Getting GPS position...";
+
 
     navigator.geolocation.getCurrentPosition(
 
         function(position) {
 
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
+            const latitude =
+                position.coords.latitude;
 
-            myPosition = [lon, lat];
+            const longitude =
+                position.coords.longitude;
 
-            console.log(
-                "GPS:",
-                lat,
-                lon
-            );
+
+            myPosition = [
+                longitude,
+                latitude
+            ];
+
 
             map.setLocation({
-                center: [lon, lat],
+
+                center: myPosition,
+
                 zoom: 16,
-                duration: 500
+
+                duration: 700
+
             });
 
-            document.getElementById("status").innerText =
-                "GPS: " +
-                lat.toFixed(6) +
-                ", " +
-                lon.toFixed(6);
+
+            status.innerText =
+                "My location";
 
         },
+
 
         function(error) {
 
             console.error(error);
 
-            let message = "GPS error";
 
             if (error.code === 1) {
-                message =
+
+                status.innerText =
                     "GPS permission denied";
-            }
 
-            if (error.code === 2) {
-                message =
-                    "GPS position unavailable";
-            }
+            } else if (error.code === 2) {
 
-            if (error.code === 3) {
-                message =
+                status.innerText =
+                    "GPS unavailable";
+
+            } else if (error.code === 3) {
+
+                status.innerText =
                     "GPS timeout";
+
+            } else {
+
+                status.innerText =
+                    "GPS error";
+
             }
 
-            document.getElementById("status").innerText =
-                message;
         },
+
 
         {
             enableHighAccuracy: true,
+
             timeout: 15000,
+
             maximumAge: 5000
+
         }
+
     );
+
 }
 
+
+/* SEARCH INPUT */
+
+searchInput.addEventListener(
+    "input",
+    function() {
+
+        const text =
+            searchInput.value.trim();
+
+
+        clearTimeout(suggestTimer);
+
+
+        if (text.length < 2) {
+
+            results.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        /*
+            Wait a little before sending request
+        */
+
+        suggestTimer =
+            setTimeout(
+                function() {
+
+                    getSuggestions(text);
+
+                },
+                300
+            );
+
+    }
+);
+
+
+/* ENTER */
+
+searchInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            search();
+
+        }
+
+    }
+);
+
+
+/* SEARCH BUTTON */
+
+searchButton.addEventListener(
+    "click",
+    search
+);
+
+
+/* SUGGEST */
+
+async function getSuggestions(text) {
+
+    try {
+
+        const response =
+            await ymaps3.suggest({
+
+                text: text,
+
+                results: 8
+
+            });
+
+
+        results.innerHTML = "";
+
+
+        if (!response ||
+            !response[0]) {
+
+            results.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        const items =
+            response[0].items ||
+            response[0];
+
+
+        if (!items.length) {
+
+            results.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        items.forEach(
+            function(item) {
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "result";
+
+
+                const title =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                title.className =
+                    "resultTitle";
+
+
+                title.innerText =
+                    item.title ||
+                    item.text ||
+                    "";
+
+
+                const address =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                address.className =
+                    "resultAddress";
+
+
+                address.innerText =
+                    item.subtitle ||
+                    item.address ||
+                    "";
+
+
+                div.appendChild(title);
+
+                div.appendChild(address);
+
+
+                div.addEventListener(
+                    "click",
+                    function() {
+
+                        selectSuggestion(item);
+
+                    }
+                );
+
+
+                results.appendChild(div);
+
+            }
+        );
+
+
+        results.style.display =
+            "block";
+
+
+    } catch (error) {
+
+        console.error(
+            "Suggest error:",
+            error
+        );
+
+        status.innerText =
+            "Search error";
+
+    }
+
+}
+
+
+/* SELECT */
+
+async function selectSuggestion(item) {
+
+    const text =
+        item.uri ||
+        item.text ||
+        item.title;
+
+
+    searchInput.value =
+        item.title ||
+        item.text ||
+        "";
+
+
+    results.style.display =
+        "none";
+
+
+    /*
+        Search selected object
+    */
+
+    await searchText(
+        text
+    );
+
+}
+
+
+/* SEARCH */
+
+async function search() {
+
+    const text =
+        searchInput.value.trim();
+
+
+    if (!text) {
+
+        return;
+
+    }
+
+
+    results.style.display =
+        "none";
+
+
+    await searchText(text);
+
+}
+
+
+/* SEARCH / GEOCODE */
+
+async function searchText(text) {
+
+    try {
+
+        status.innerText =
+            "Searching...";
+
+
+        /*
+            Yandex Search API
+        */
+
+        const response =
+            await ymaps3.search({
+
+                text: text,
+
+                results: 1
+
+            });
+
+
+        if (!response ||
+            !response[0] ||
+            !response[0].items ||
+            !response[0].items.length) {
+
+            status.innerText =
+                "Nothing found";
+
+            return;
+
+        }
+
+
+        const item =
+            response[0].items[0];
+
+
+        const position =
+            item.geometry &&
+            item.geometry.coordinates;
+
+
+        if (!position) {
+
+            status.innerText =
+                "Coordinates not found";
+
+            return;
+
+        }
+
+
+        destinationPosition =
+            position;
+
+
+        /*
+            Move map
+        */
+
+        map.setLocation({
+
+            center:
+                destinationPosition,
+
+            zoom: 16,
+
+            duration: 700
+
+        });
+
+
+        /*
+            Remove previous marker
+        */
+
+        if (destinationMarker) {
+
+            map.removeChild(
+                destinationMarker
+            );
+
+        }
+
+
+        /*
+            Create marker
+        */
+
+        const {
+            YMapMarker
+        } = ymaps3;
+
+
+        const marker =
+            document.createElement(
+                "div"
+            );
+
+
+        marker.style.width =
+            "32px";
+
+        marker.style.height =
+            "32px";
+
+        marker.style.borderRadius =
+            "50%";
+
+        marker.style.background =
+            "#e53935";
+
+        marker.style.border =
+            "5px solid white";
+
+        marker.style.boxShadow =
+            "0 2px 8px rgba(0,0,0,.4)";
+
+
+        destinationMarker =
+            new YMapMarker(
+                {
+                    coordinates:
+                        destinationPosition,
+
+                    draggable: false
+                },
+                marker
+            );
+
+
+        map.addChild(
+            destinationMarker
+        );
+
+
+        /*
+            Destination panel
+        */
+
+        destinationName.innerText =
+            item.properties &&
+            item.properties.name
+                ? item.properties.name
+                : text;
+
+
+        destinationAddress.innerText =
+            item.properties &&
+            item.properties.description
+                ? item.properties.description
+                : "";
+
+
+        destination.style.display =
+            "block";
+
+
+        status.innerText =
+            "Destination selected";
+
+
+    } catch (error) {
+
+        console.error(
+            "Search error:",
+            error
+        );
+
+
+        status.innerText =
+            "Search failed";
+
+    }
+
+}
+
+
+/* CLEAR */
+
+clearDestination.addEventListener(
+    "click",
+    function() {
+
+        if (destinationMarker) {
+
+            map.removeChild(
+                destinationMarker
+            );
+
+            destinationMarker =
+                null;
+
+        }
+
+
+        destinationPosition =
+            null;
+
+
+        destination.style.display =
+            "none";
+
+
+        searchInput.value =
+            "";
+
+
+        status.innerText =
+            "Ready";
+
+    }
+);
+
+
+/* LOCATION BUTTON */
+
+locationButton.addEventListener(
+    "click",
+    getMyLocation
+);
+
+
+/* START */
 
 initMap();
 
