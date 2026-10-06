@@ -84,8 +84,7 @@
   function search() {
     var text = $("q").value.trim();
     if (!text) { say("Введите адрес или место"); return; }
-    if (!mePoint) { say("Ждём вашу геопозицию…"); return; }
-    say("Ищу…");
+    say(mePoint ? "Ищу…" : "Геопозиции нет, маршрут от центра карты. Ищу…");
     ymaps.geocode(text, { results:1, boundedBy:map.getBounds() }).then(function (r) {
       var obj = r.geoObjects.get(0);
       if (!obj) { say("Ничего не найдено. Уточните адрес."); return; }
@@ -97,7 +96,7 @@
   function buildRoute(dest) {
     clearRoute();
     route = new ymaps.multiRouter.MultiRoute(
-      { referencePoints:[mePoint, dest], params:{ routingMode:"auto", results:1 } },
+      { referencePoints:[mePoint || map.getCenter(), dest], params:{ routingMode:"auto", results:1 } },
       { boundsAutoApply:true, routeActiveStrokeWidth:9, routeActiveStrokeColor:"#3b8cf0" }
     );
     map.geoObjects.add(route);
