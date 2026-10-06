@@ -3,80 +3,128 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Тест для Tesla</title>
+<title>Навигация</title>
 <style>
-  :root { --bg:#14171a; --fg:#e8eaec; --ok:#4cc38a; --bad:#e5604d; --line:#2a2f35; }
-  * { box-sizing: border-box; }
-  html, body { height:100%; margin:0; background:var(--bg); color:var(--fg);
-    font-family: system-ui, sans-serif; font-size:20px; }
-  body { display:flex; flex-direction:column; }
-  #panel { padding:14px 18px; border-bottom:1px solid var(--line); display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:10px; }
-  .row { padding:8px 0; }
-  .ok { color:var(--ok); } .bad { color:var(--bad); }
-  button { font-size:20px; padding:14px 22px; border-radius:10px; border:1px solid var(--line);
-    background:#22272d; color:var(--fg); }
-  #map { flex:1; min-height:300px; }
-  #nomap { padding:18px; color:#9aa3ab; }
+  :root { --bg:#14171a; --fg:#e8eaec; --mut:#9aa3ab; --line:#2f363d; --blue:#3b8cf0; --red:#e5604d; }
+  * { box-sizing:border-box; }
+  html, body { height:100%; margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; }
+  #map { position:absolute; inset:0; }
+  .card { position:absolute; background:var(--bg); border:1px solid var(--line); border-radius:12px; }
+  #top { top:12px; left:12px; right:12px; display:flex; gap:10px; padding:10px; z-index:5; max-width:760px; }
+  #q { flex:1; font-size:22px; padding:12px 14px; border-radius:8px; border:1px solid var(--line);
+       background:#22272d; color:var(--fg); min-width:0; }
+  button { font-size:20px; padding:12px 20px; border-radius:8px; border:1px solid var(--line);
+           background:#22272d; color:var(--fg); }
+  #go { background:var(--blue); border-color:var(--blue); color:#fff; }
+  #msg { top:96px; left:12px; padding:10px 14px; font-size:18px; color:var(--mut); display:none; z-index:5; }
+  #me { right:12px; top:96px; z-index:5; }
+  #info { left:12px; right:12px; bottom:12px; padding:14px 18px; display:none; gap:18px; align-items:center; z-index:5; max-width:760px; }
+  #info .main { flex:1; min-width:0; }
+  #sum { font-size:26px; font-weight:500; }
+  #sum small { font-size:17px; font-weight:400; color:var(--mut); }
+  #next { font-size:18px; color:var(--mut); margin-top:4px; }
+  #cancel { background:var(--red); border-color:var(--red); color:#fff; }
+  ymaps[class*="suggest"] { font-size:20px; }
 </style>
 </head>
 <body>
-<div id="panel">
-  <div class="row" id="geo">Геопозиция: проверяю…</div>
-  <div class="row" id="spd">Скорость: —</div>
-  <div class="row" id="ua">Браузер: —</div>
-  <div class="row"><button id="say">Проверить голос</button> <span id="sayres"></span></div>
-</div>
 <div id="map"></div>
 
+<div id="top" class="card">
+  <input id="q" type="text" placeholder="Куда едем?" autocomplete="off">
+  <button id="go">Найти</button>
+</div>
+<div id="msg" class="card"></div>
+<button id="me" class="card" aria-label="Моя позиция">Я здесь</button>
+<div id="info" class="card">
+  <div class="main">
+    <div id="sum"></div>
+    <div id="next"></div>
+  </div>
+  <button id="cancel">Отмена</button>
+</div>
+
 <script>
-  // Ключ Яндекс Карт. Пока пусто — карта не загрузится, остальные проверки работают.
-  var YANDEX_KEY = "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
+  var KEY = "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
+  var SUGGEST_KEY = "f382b839-b555-4f50-82b6-7b45bb9769d5";
 
-  document.getElementById("ua").textContent = "Браузер: " + navigator.userAgent;
+  var map, mePoint = null, meMark = null, route = null, follow = true;
+  var $ = function (id) { return document.getElementById(id); };
 
-  var geo = document.getElementById("geo"), spd = document.getElementById("spd");
-  var map, mark;
-
-  function onPos(p) {
-    var c = p.coords;
-    geo.innerHTML = '<span class="ok">Геопозиция работает</span><br>' +
-      c.latitude.toFixed(5) + ", " + c.longitude.toFixed(5) +
-      "<br>точность ±" + Math.round(c.accuracy) + " м";
-    spd.textContent = "Скорость: " + (c.speed != null ? Math.round(c.speed * 3.6) + " км/ч" : "нет данных");
-    if (map) {
-      var pt = [c.latitude, c.longitude];
-      if (!mark) { mark = new ymaps.Placemark(pt); map.geoObjects.add(mark); map.setCenter(pt, 16); }
-      else mark.geometry.setCoordinates(pt);
-    }
+  function say(t) {
+    var m = $("msg");
+    if (!t) { m.style.display = "none"; return; }
+    m.textContent = t; m.style.display = "block";
   }
-  function onErr(e) { geo.innerHTML = '<span class="bad">Геопозиция не работает: ' + e.message + "</span>"; }
 
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy:true, maximumAge:1000 });
-  } else { onErr({ message:"API недоступен" }); }
+  function init() {
+    map = new ymaps.Map("map", { center:[41.7151, 44.8271], zoom:12, controls:["zoomControl"] });
+    new ymaps.SuggestView("q");
 
-  document.getElementById("say").onclick = function () {
-    var r = document.getElementById("sayres");
-    if (!("speechSynthesis" in window)) { r.innerHTML = '<span class="bad">озвучка не поддерживается</span>'; return; }
-    var u = new SpeechSynthesisUtterance("Через двести метров поворот направо");
-    u.lang = "ru-RU";
-    speechSynthesis.speak(u);
-    r.innerHTML = '<span class="ok">команда отправлена — слышно?</span>';
-  };
+    navigator.geolocation.watchPosition(function (p) {
+      mePoint = [p.coords.latitude, p.coords.longitude];
+      if (!meMark) {
+        meMark = new ymaps.Placemark(mePoint, {}, { preset:"islands#geolocationIcon" });
+        map.geoObjects.add(meMark);
+        map.setCenter(mePoint, 15);
+      } else {
+        meMark.geometry.setCoordinates(mePoint);
+        if (follow && !route) map.setCenter(mePoint);
+      }
+    }, function (e) { say("Нет геопозиции: " + e.message); },
+    { enableHighAccuracy:true, maximumAge:1000 });
 
-  if (YANDEX_KEY) {
-    var s = document.createElement("script");
-    s.src = "https://api-maps.yandex.ru/2.1/?apikey=" + YANDEX_KEY + "&lang=ru_RU";
-    s.onload = function () {
-      ymaps.ready(function () {
-        map = new ymaps.Map("map", { center:[41.7151, 44.8271], zoom:12, controls:["zoomControl"] });
-      });
-    };
-    document.head.appendChild(s);
-  } else {
-    document.getElementById("map").innerHTML = '<div id="nomap">Ключ Яндекс Карт пока не вставлен — карта не показана.</div>';
+    $("go").onclick = search;
+    $("q").onkeydown = function (e) { if (e.key === "Enter") search(); };
+    $("me").onclick = function () { follow = true; if (mePoint) map.setCenter(mePoint, 16); };
+    $("cancel").onclick = clearRoute;
+    map.events.add("actionbegin", function () { follow = false; });
   }
+
+  function search() {
+    var text = $("q").value.trim();
+    if (!text) { say("Введите адрес или место"); return; }
+    if (!mePoint) { say("Ждём вашу геопозицию…"); return; }
+    say("Ищу…");
+    ymaps.geocode(text, { results:1, boundedBy:map.getBounds() }).then(function (r) {
+      var obj = r.geoObjects.get(0);
+      if (!obj) { say("Ничего не найдено. Уточните адрес."); return; }
+      say("");
+      buildRoute(obj.geometry.getCoordinates());
+    }, function () { say("Не удалось выполнить поиск. Проверьте ключ Геокодера."); });
+  }
+
+  function buildRoute(dest) {
+    clearRoute();
+    route = new ymaps.multiRouter.MultiRoute(
+      { referencePoints:[mePoint, dest], params:{ routingMode:"auto", results:1 } },
+      { boundsAutoApply:true, routeActiveStrokeWidth:9, routeActiveStrokeColor:"#3b8cf0" }
+    );
+    map.geoObjects.add(route);
+    route.model.events.add("requestsuccess", function () {
+      var a = route.getActiveRoute();
+      if (!a) return;
+      var dist = a.properties.get("distance").text;
+      var dur = (a.properties.get("durationInTraffic") || a.properties.get("duration")).text;
+      $("sum").innerHTML = dur + ' <small>· ' + dist + '</small>';
+      var seg = a.getPaths().get(0).getSegments().get(0);
+      $("next").textContent = seg ? "Далее: " + seg.properties.get("text") : "";
+      $("info").style.display = "flex";
+    });
+    route.model.events.add("requestfail", function () { say("Маршрут не построен"); });
+  }
+
+  function clearRoute() {
+    if (route) { map.geoObjects.remove(route); route = null; }
+    $("info").style.display = "none";
+    say("");
+  }
+
+  var s = document.createElement("script");
+  s.src = "https://api-maps.yandex.ru/2.1/?apikey=" + KEY + "&suggest_apikey=" + SUGGEST_KEY + "&lang=ru_RU";
+  s.onload = function () { ymaps.ready(init); };
+  s.onerror = function () { say("Карта не загрузилась"); };
+  document.head.appendChild(s);
 </script>
 </body>
 </html>
