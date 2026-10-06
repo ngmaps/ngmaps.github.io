@@ -1,173 +1,392 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width,
-                   initial-scale=1.0,
-                   maximum-scale=1.0,
-                   user-scalable=no">
+    <meta
+        name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no"
+    >
+
+    <meta name="theme-color" content="#000000">
 
     <title>Tesla Yandex Navigation</title>
 
-    <!-- Yandex Maps JavaScript API 3.0 -->
-    <script src="https://api-maps.yandex.ru/v3/?apikey=fc5db2c9-c6bd-49fe-9ab7-71d08afae06a&lang=en_US"></script>
+
+    <!-- =========================================================
+         YANDEX MAPS JAVASCRIPT API 3.0
+         ========================================================= -->
+
+    <script
+        src="https://api-maps.yandex.ru/v3/?apikey=fc5db2c9-c6bd-49fe-9ab7-71d08afae06a&lang=en_US"
+    ></script>
+
 
     <style>
+
         * {
             box-sizing: border-box;
         }
 
+
         html,
         body {
-            margin: 0;
-            padding: 0;
+
             width: 100%;
             height: 100%;
+
+            margin: 0;
+            padding: 0;
+
             overflow: hidden;
-            font-family: Arial, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
             background: #111;
+
         }
+
+
+        /* =====================================================
+           MAP
+           ===================================================== */
 
         #map {
-            position: absolute;
-            inset: 0;
+
+            position: fixed;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 1;
+
         }
 
-        /* SEARCH PANEL */
+
+        /* =====================================================
+           SEARCH PANEL
+           ===================================================== */
 
         #searchPanel {
+
             position: fixed;
+
             top: 18px;
             left: 18px;
             right: 18px;
 
             z-index: 1000;
+
         }
+
 
         #searchRow {
+
             display: flex;
+
+            width: 100%;
+
             gap: 10px;
+
         }
 
+
         #searchInput {
+
             flex: 1;
 
-            height: 60px;
+            min-width: 0;
 
-            border: none;
-            outline: none;
-
-            border-radius: 14px;
+            height: 62px;
 
             padding: 0 20px;
 
-            font-size: 20px;
+            border: none;
+
+            border-radius: 15px;
+
+            outline: none;
 
             background: white;
 
+            color: #111;
+
+            font-size: 20px;
+
             box-shadow:
-                0 3px 12px rgba(0,0,0,.25);
+                0 4px 15px
+                rgba(0,0,0,0.30);
+
         }
 
+
+        #searchInput::placeholder {
+
+            color: #777;
+
+        }
+
+
         #searchButton {
-            width: 100px;
+
+            width: 120px;
+
+            height: 62px;
 
             border: none;
-            border-radius: 14px;
+
+            border-radius: 15px;
 
             background: #111;
+
             color: white;
 
             font-size: 18px;
+
             font-weight: bold;
+
+            box-shadow:
+                0 4px 15px
+                rgba(0,0,0,0.30);
+
+            cursor: pointer;
+
         }
 
-        /* RESULTS */
+
+        #searchButton:active {
+
+            transform: scale(0.97);
+
+        }
+
+
+        /* =====================================================
+           SEARCH RESULTS
+           ===================================================== */
 
         #results {
-            margin-top: 10px;
-
-            background: white;
-
-            border-radius: 14px;
-
-            overflow: hidden;
 
             display: none;
 
-            max-height: 420px;
+            margin-top: 10px;
+
+            width: 100%;
+
+            max-height: 430px;
+
+            overflow-y: auto;
+
+            background: white;
+
+            border-radius: 15px;
 
             box-shadow:
-                0 4px 15px rgba(0,0,0,.3);
+                0 4px 18px
+                rgba(0,0,0,0.35);
+
         }
 
-        .result {
-            padding: 18px;
 
-            border-bottom: 1px solid #ddd;
+        .result {
+
+            padding: 17px 18px;
+
+            border-bottom:
+                1px solid #ddd;
+
+            color: #111;
+
+            cursor: pointer;
+
+        }
+
+
+        .result:last-child {
+
+            border-bottom: none;
+
+        }
+
+
+        .result:active {
+
+            background: #eeeeee;
+
+        }
+
+
+        .resultTitle {
 
             font-size: 18px;
 
-            cursor: pointer;
-        }
-
-        .result:last-child {
-            border-bottom: none;
-        }
-
-        .result:active {
-            background: #eee;
-        }
-
-        .resultTitle {
             font-weight: bold;
+
         }
+
 
         .resultAddress {
+
             margin-top: 5px;
 
             color: #666;
 
             font-size: 15px;
+
+            line-height: 1.3;
+
         }
 
-        /* BOTTOM */
 
-        #bottomPanel {
+        /* =====================================================
+           DESTINATION PANEL
+           ===================================================== */
+
+        #destinationPanel {
+
+            display: none;
+
             position: fixed;
 
             left: 18px;
             right: 18px;
+
+            bottom: 96px;
+
+            z-index: 1000;
+
+            padding: 18px;
+
+            background: white;
+
+            border-radius: 16px;
+
+            box-shadow:
+                0 4px 18px
+                rgba(0,0,0,0.35);
+
+        }
+
+
+        #destinationTitle {
+
+            font-size: 20px;
+
+            font-weight: bold;
+
+            color: #111;
+
+        }
+
+
+        #destinationAddress {
+
+            margin-top: 6px;
+
+            font-size: 15px;
+
+            line-height: 1.35;
+
+            color: #666;
+
+        }
+
+
+        #clearButton {
+
+            width: 100%;
+
+            height: 48px;
+
+            margin-top: 14px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: #111;
+
+            color: white;
+
+            font-size: 17px;
+
+            font-weight: bold;
+
+        }
+
+
+        /* =====================================================
+           BOTTOM PANEL
+           ===================================================== */
+
+        #bottomPanel {
+
+            position: fixed;
+
+            left: 18px;
+            right: 18px;
+
             bottom: 18px;
 
             z-index: 1000;
 
             display: flex;
-            justify-content: space-between;
+
             align-items: center;
 
-            pointer-events: none;
+            justify-content:
+                space-between;
+
+            gap: 12px;
+
         }
 
-        #status {
-            background: rgba(0,0,0,.82);
 
-            color: white;
+        #status {
+
+            min-height: 54px;
+
+            max-width: calc(100% - 80px);
+
+            padding:
+                14px 18px;
+
+            display: flex;
+
+            align-items: center;
 
             border-radius: 14px;
 
-            padding: 14px 18px;
+            background:
+                rgba(0,0,0,0.82);
+
+            color: white;
 
             font-size: 17px;
 
-            max-width: 70%;
+            box-shadow:
+                0 4px 15px
+                rgba(0,0,0,0.30);
 
-            pointer-events: auto;
         }
 
+
         #locationButton {
+
+            flex-shrink: 0;
+
             width: 64px;
             height: 64px;
 
@@ -177,130 +396,225 @@
 
             background: white;
 
-            font-size: 27px;
+            color: #111;
+
+            font-size: 28px;
 
             box-shadow:
-                0 3px 12px rgba(0,0,0,.35);
+                0 4px 15px
+                rgba(0,0,0,0.35);
 
-            pointer-events: auto;
+            cursor: pointer;
+
         }
 
-        /* SELECTED DESTINATION */
 
-        #destination {
+        #locationButton:active {
+
+            transform: scale(0.95);
+
+        }
+
+
+        /* =====================================================
+           LOADING
+           ===================================================== */
+
+        #loading {
+
             position: fixed;
 
-            left: 18px;
-            right: 18px;
-            bottom: 95px;
+            inset: 0;
 
-            z-index: 1000;
+            z-index: 5000;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #111;
+
+            color: white;
+
+            font-size: 22px;
+
+        }
+
+
+        #loading.hidden {
 
             display: none;
 
-            background: white;
-
-            border-radius: 16px;
-
-            padding: 18px;
-
-            box-shadow:
-                0 4px 15px rgba(0,0,0,.35);
         }
 
-        #destinationName {
-            font-size: 20px;
-            font-weight: bold;
+
+        /* =====================================================
+           SMALL SCREEN
+           ===================================================== */
+
+        @media (max-width: 600px) {
+
+            #searchInput {
+
+                font-size: 18px;
+
+            }
+
+            #searchButton {
+
+                width: 95px;
+
+                font-size: 16px;
+
+            }
+
         }
 
-        #destinationAddress {
-            margin-top: 6px;
-
-            color: #666;
-
-            font-size: 15px;
-        }
-
-        #clearDestination {
-            margin-top: 12px;
-
-            width: 100%;
-
-            height: 48px;
-
-            border: none;
-
-            border-radius: 10px;
-
-            background: #111;
-            color: white;
-
-            font-size: 17px;
-        }
     </style>
+
 </head>
+
 
 <body>
 
-<div id="map"></div>
+
+    <!-- =====================================================
+         MAP
+         ===================================================== -->
+
+    <div id="map"></div>
 
 
-<!-- SEARCH -->
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
 
-<div id="searchPanel">
+    <div id="loading">
 
-    <div id="searchRow">
+        Loading Yandex Maps...
 
-        <input
-            id="searchInput"
-            type="search"
-            placeholder="Where to?"
-            autocomplete="off"
-            enterkeyhint="search"
+    </div>
+
+
+    <!-- =====================================================
+         SEARCH
+         ===================================================== -->
+
+    <div id="searchPanel">
+
+        <div id="searchRow">
+
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Where to?"
+                autocomplete="off"
+                enterkeyhint="search"
+            >
+
+            <button
+                id="searchButton"
+                type="button"
+            >
+                SEARCH
+            </button>
+
+        </div>
+
+
+        <div id="results"></div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DESTINATION
+         ===================================================== -->
+
+    <div id="destinationPanel">
+
+        <div id="destinationTitle"></div>
+
+        <div id="destinationAddress"></div>
+
+        <button
+            id="clearButton"
+            type="button"
         >
-
-        <button id="searchButton">
-            SEARCH
+            CLEAR DESTINATION
         </button>
 
     </div>
 
-    <div id="results"></div>
 
-</div>
+    <!-- =====================================================
+         BOTTOM
+         ===================================================== -->
 
+    <div id="bottomPanel">
 
-<!-- DESTINATION -->
+        <div id="status">
 
-<div id="destination">
+            Starting...
 
-    <div id="destinationName"></div>
-
-    <div id="destinationAddress"></div>
-
-    <button id="clearDestination">
-        CLEAR
-    </button>
-
-</div>
+        </div>
 
 
-<!-- BOTTOM -->
+        <button
+            id="locationButton"
+            type="button"
+        >
+            📍
+        </button>
 
-<div id="bottomPanel">
-
-    <div id="status">
-        Loading Yandex Maps...
     </div>
-
-    <button id="locationButton">
-        📍
-    </button>
-
-</div>
 
 
 <script>
+
+
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
+
+
+/*
+   JavaScript API 3.0
+
+   This is your JS API key.
+*/
+
+const YANDEX_JS_API_KEY =
+    "fc5db2c9-c6bd-49fe-9ab7-71d08afae06a";
+
+
+/*
+   IMPORTANT
+
+   Put your REAL Search API key here.
+
+   Do NOT put the UUID/name of the API product here.
+*/
+
+const YANDEX_SEARCH_API_KEY =
+    "PASTE_SEARCH_API_KEY_HERE";
+
+
+/*
+   Put your REAL Geosuggest API key here.
+
+   Do NOT put the UUID/name of the API product here.
+*/
+
+const YANDEX_SUGGEST_API_KEY =
+    "PASTE_GEOSUGGEST_API_KEY_HERE";
+
+
+/* ============================================================
+   GLOBAL VARIABLES
+   ============================================================ */
 
 let map = null;
 
@@ -310,24 +624,16 @@ let destinationPosition = null;
 
 let destinationMarker = null;
 
-let suggestTimer = null;
 
+/* ============================================================
+   DOM
+   ============================================================ */
 
-/*
-    IMPORTANT
+const loading =
+    document.getElementById("loading");
 
-    JavaScript API key:
-    fc5db2c9...
-
-    Geosuggest API key:
-    f382...
-*/
-
-const SUGGEST_API_KEY =
-    "f382b839-b555-4f50-82b6-7b45bb9769d5";
-
-
-/* DOM */
+const status =
+    document.getElementById("status");
 
 const searchInput =
     document.getElementById("searchInput");
@@ -338,46 +644,101 @@ const searchButton =
 const results =
     document.getElementById("results");
 
-const status =
-    document.getElementById("status");
+const locationButton =
+    document.getElementById("locationButton");
 
-const destination =
-    document.getElementById("destination");
+const destinationPanel =
+    document.getElementById("destinationPanel");
 
-const destinationName =
-    document.getElementById("destinationName");
+const destinationTitle =
+    document.getElementById("destinationTitle");
 
 const destinationAddress =
     document.getElementById("destinationAddress");
 
-const locationButton =
-    document.getElementById("locationButton");
-
-const clearDestination =
-    document.getElementById("clearDestination");
+const clearButton =
+    document.getElementById("clearButton");
 
 
-/* MAP */
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+function setStatus(message) {
+
+    status.innerText = message;
+
+}
+
+
+/* ============================================================
+   INITIALIZE MAP
+   ============================================================ */
 
 async function initMap() {
 
     try {
 
-        status.innerText =
-            "Loading Yandex Maps...";
+        setStatus(
+            "Loading Yandex Maps..."
+        );
+
+
+        /*
+           Wait for JS API 3.0
+        */
 
         await ymaps3.ready;
 
+
         /*
-            Configure Geosuggest API key
+           Configure Search / Suggest API keys.
+
+           We only set them when real keys
+           have been entered.
         */
 
-        ymaps3
-            .getDefaultConfig()
-            .setApikeys({
-                suggest: SUGGEST_API_KEY
-            });
+        const apiKeys = {};
 
+
+        if (
+            YANDEX_SEARCH_API_KEY &&
+            !YANDEX_SEARCH_API_KEY
+                .startsWith("PASTE_")
+        ) {
+
+            apiKeys.search =
+                YANDEX_SEARCH_API_KEY;
+
+        }
+
+
+        if (
+            YANDEX_SUGGEST_API_KEY &&
+            !YANDEX_SUGGEST_API_KEY
+                .startsWith("PASTE_")
+        ) {
+
+            apiKeys.suggest =
+                YANDEX_SUGGEST_API_KEY;
+
+        }
+
+
+        if (
+            Object.keys(apiKeys).length > 0
+        ) {
+
+            ymaps3
+                .getDefaultConfig()
+                .setApikeys(apiKeys);
+
+        }
+
+
+        /*
+           Get map classes.
+        */
 
         const {
             YMap,
@@ -386,65 +747,121 @@ async function initMap() {
         } = ymaps3;
 
 
+        /*
+           Create map.
+
+           Tbilisi is used only as the
+           initial position.
+        */
+
         map = new YMap(
+
             document.getElementById("map"),
+
             {
+
                 location: {
+
                     center: [
                         44.8015,
                         41.6938
                     ],
+
                     zoom: 12
+
                 }
+
             }
+
         );
 
 
+        /*
+           Map tiles.
+        */
+
         map.addChild(
+
             new YMapDefaultSchemeLayer()
+
         );
 
 
+        /*
+           Features layer.
+        */
+
         map.addChild(
+
             new YMapDefaultFeaturesLayer({
                 zIndex: 1800
             })
+
         );
 
 
-        status.innerText =
-            "Yandex Maps ready";
+        loading.classList.add(
+            "hidden"
+        );
 
+
+        setStatus(
+            "Yandex Maps ready"
+        );
+
+
+        /*
+           Try to get Tesla/browser GPS.
+        */
 
         getMyLocation();
 
-    } catch (error) {
 
-        console.error(error);
+    }
 
-        status.innerText =
+    catch (error) {
+
+        console.error(
+            "Yandex initialization error:",
+            error
+        );
+
+
+        loading.innerText =
             "Yandex Maps error";
+
+
+        setStatus(
+            "Yandex Maps failed to load"
+        );
 
     }
 
 }
 
 
-/* GPS */
+/* ============================================================
+   GPS
+   ============================================================ */
 
 function getMyLocation() {
 
-    if (!navigator.geolocation) {
+    if (
+        !navigator.geolocation
+    ) {
 
-        status.innerText =
-            "GPS is not supported";
+        setStatus(
+            "GPS is not supported"
+        );
 
         return;
+
     }
 
 
-    status.innerText =
-        "Getting GPS position...";
+    setStatus(
+        "Getting GPS location..."
+    );
 
 
     navigator.geolocation.getCurrentPosition(
@@ -459,14 +876,28 @@ function getMyLocation() {
 
 
             myPosition = [
+
                 longitude,
                 latitude
+
             ];
 
 
+            console.log(
+                "GPS:",
+                latitude,
+                longitude
+            );
+
+
+            /*
+               Move map to vehicle.
+            */
+
             map.setLocation({
 
-                center: myPosition,
+                center:
+                    myPosition,
 
                 zoom: 16,
 
@@ -475,36 +906,56 @@ function getMyLocation() {
             });
 
 
-            status.innerText =
-                "My location";
+            setStatus(
+                "My location"
+            );
 
         },
 
 
         function(error) {
 
-            console.error(error);
+            console.error(
+                "GPS error:",
+                error
+            );
 
 
-            if (error.code === 1) {
+            if (
+                error.code === 1
+            ) {
 
-                status.innerText =
-                    "GPS permission denied";
+                setStatus(
+                    "GPS permission denied"
+                );
 
-            } else if (error.code === 2) {
+            }
 
-                status.innerText =
-                    "GPS unavailable";
+            else if (
+                error.code === 2
+            ) {
 
-            } else if (error.code === 3) {
+                setStatus(
+                    "GPS position unavailable"
+                );
 
-                status.innerText =
-                    "GPS timeout";
+            }
 
-            } else {
+            else if (
+                error.code === 3
+            ) {
 
-                status.innerText =
-                    "GPS error";
+                setStatus(
+                    "GPS timeout"
+                );
+
+            }
+
+            else {
+
+                setStatus(
+                    "GPS error"
+                );
 
             }
 
@@ -512,6 +963,7 @@ function getMyLocation() {
 
 
         {
+
             enableHighAccuracy: true,
 
             timeout: 15000,
@@ -525,425 +977,171 @@ function getMyLocation() {
 }
 
 
-/* SEARCH INPUT */
+/* ============================================================
+   SEARCH BUTTON
+   ============================================================ */
 
-searchInput.addEventListener(
-    "input",
+searchButton.addEventListener(
+
+    "click",
+
     function() {
 
-        const text =
-            searchInput.value.trim();
-
-
-        clearTimeout(suggestTimer);
-
-
-        if (text.length < 2) {
-
-            results.style.display =
-                "none";
-
-            return;
-
-        }
-
-
-        /*
-            Wait a little before sending request
-        */
-
-        suggestTimer =
-            setTimeout(
-                function() {
-
-                    getSuggestions(text);
-
-                },
-                300
-            );
+        performSearch();
 
     }
+
 );
 
 
-/* ENTER */
+/* ============================================================
+   ENTER KEY
+   ============================================================ */
 
 searchInput.addEventListener(
+
     "keydown",
+
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             event.preventDefault();
 
-            search();
+            performSearch();
 
         }
 
     }
+
 );
 
 
-/* SEARCH BUTTON */
+/* ============================================================
+   SEARCH
+   ============================================================ */
 
-searchButton.addEventListener(
-    "click",
-    search
-);
+async function performSearch() {
 
-
-/* SUGGEST */
-
-async function getSuggestions(text) {
-
-    try {
-
-        const response =
-            await ymaps3.suggest({
-
-                text: text,
-
-                results: 8
-
-            });
-
-
-        results.innerHTML = "";
-
-
-        if (!response ||
-            !response[0]) {
-
-            results.style.display =
-                "none";
-
-            return;
-
-        }
-
-
-        const items =
-            response[0].items ||
-            response[0];
-
-
-        if (!items.length) {
-
-            results.style.display =
-                "none";
-
-            return;
-
-        }
-
-
-        items.forEach(
-            function(item) {
-
-                const div =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                div.className =
-                    "result";
-
-
-                const title =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                title.className =
-                    "resultTitle";
-
-
-                title.innerText =
-                    item.title ||
-                    item.text ||
-                    "";
-
-
-                const address =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                address.className =
-                    "resultAddress";
-
-
-                address.innerText =
-                    item.subtitle ||
-                    item.address ||
-                    "";
-
-
-                div.appendChild(title);
-
-                div.appendChild(address);
-
-
-                div.addEventListener(
-                    "click",
-                    function() {
-
-                        selectSuggestion(item);
-
-                    }
-                );
-
-
-                results.appendChild(div);
-
-            }
-        );
-
-
-        results.style.display =
-            "block";
-
-
-    } catch (error) {
-
-        console.error(
-            "Suggest error:",
-            error
-        );
-
-        status.innerText =
-            "Search error";
-
-    }
-
-}
-
-
-/* SELECT */
-
-async function selectSuggestion(item) {
-
-    const text =
-        item.uri ||
-        item.text ||
-        item.title;
-
-
-    searchInput.value =
-        item.title ||
-        item.text ||
-        "";
-
-
-    results.style.display =
-        "none";
-
-
-    /*
-        Search selected object
-    */
-
-    await searchText(
-        text
-    );
-
-}
-
-
-/* SEARCH */
-
-async function search() {
-
-    const text =
+    const query =
         searchInput.value.trim();
 
 
-    if (!text) {
+    if (!query) {
+
+        setStatus(
+            "Enter a destination"
+        );
+
+        searchInput.focus();
 
         return;
 
     }
 
 
+    /*
+       If Search API key isn't configured,
+       tell user exactly what is missing.
+    */
+
+    if (
+        YANDEX_SEARCH_API_KEY
+            .startsWith("PASTE_")
+    ) {
+
+        setStatus(
+            "Search API key is not configured"
+        );
+
+        results.innerHTML = `
+
+            <div class="result">
+
+                <div class="resultTitle">
+                    Search API key required
+                </div>
+
+                <div class="resultAddress">
+                    Add your Search API key
+                    to the code.
+                </div>
+
+            </div>
+
+        `;
+
+        results.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    setStatus(
+        "Searching..."
+    );
+
+
     results.style.display =
         "none";
 
 
-    await searchText(text);
-
-}
-
-
-/* SEARCH / GEOCODE */
-
-async function searchText(text) {
-
     try {
-
-        status.innerText =
-            "Searching...";
-
-
-        /*
-            Yandex Search API
-        */
 
         const response =
             await ymaps3.search({
 
-                text: text,
+                text: query,
 
-                results: 1
+                results: 8
 
             });
 
 
-        if (!response ||
-            !response[0] ||
-            !response[0].items ||
-            !response[0].items.length) {
-
-            status.innerText =
-                "Nothing found";
-
-            return;
-
-        }
-
-
-        const item =
-            response[0].items[0];
-
-
-        const position =
-            item.geometry &&
-            item.geometry.coordinates;
-
-
-        if (!position) {
-
-            status.innerText =
-                "Coordinates not found";
-
-            return;
-
-        }
-
-
-        destinationPosition =
-            position;
-
-
-        /*
-            Move map
-        */
-
-        map.setLocation({
-
-            center:
-                destinationPosition,
-
-            zoom: 16,
-
-            duration: 700
-
-        });
-
-
-        /*
-            Remove previous marker
-        */
-
-        if (destinationMarker) {
-
-            map.removeChild(
-                destinationMarker
-            );
-
-        }
-
-
-        /*
-            Create marker
-        */
-
-        const {
-            YMapMarker
-        } = ymaps3;
-
-
-        const marker =
-            document.createElement(
-                "div"
-            );
-
-
-        marker.style.width =
-            "32px";
-
-        marker.style.height =
-            "32px";
-
-        marker.style.borderRadius =
-            "50%";
-
-        marker.style.background =
-            "#e53935";
-
-        marker.style.border =
-            "5px solid white";
-
-        marker.style.boxShadow =
-            "0 2px 8px rgba(0,0,0,.4)";
-
-
-        destinationMarker =
-            new YMapMarker(
-                {
-                    coordinates:
-                        destinationPosition,
-
-                    draggable: false
-                },
-                marker
-            );
-
-
-        map.addChild(
-            destinationMarker
+        console.log(
+            "Search response:",
+            response
         );
 
 
         /*
-            Destination panel
+           Yandex returns SearchResponse.
         */
 
-        destinationName.innerText =
-            item.properties &&
-            item.properties.name
-                ? item.properties.name
-                : text;
+        const items =
+            response.items || [];
 
 
-        destinationAddress.innerText =
-            item.properties &&
-            item.properties.description
-                ? item.properties.description
-                : "";
+        if (
+            items.length === 0
+        ) {
+
+            setStatus(
+                "Nothing found"
+            );
+
+            return;
+
+        }
 
 
-        destination.style.display =
-            "block";
+        showSearchResults(
+            items
+        );
 
 
-        status.innerText =
-            "Destination selected";
+        setStatus(
+            "Select destination"
+        );
 
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "Search error:",
@@ -951,21 +1149,349 @@ async function searchText(text) {
         );
 
 
-        status.innerText =
-            "Search failed";
+        setStatus(
+            "Search failed"
+        );
+
+
+        results.innerHTML = `
+
+            <div class="result">
+
+                <div class="resultTitle">
+                    Search error
+                </div>
+
+                <div class="resultAddress">
+                    Check your Search API key
+                    and API permissions.
+                </div>
+
+            </div>
+
+        `;
+
+
+        results.style.display =
+            "block";
 
     }
 
 }
 
 
-/* CLEAR */
+/* ============================================================
+   DISPLAY SEARCH RESULTS
+   ============================================================ */
 
-clearDestination.addEventListener(
+function showSearchResults(
+    items
+) {
+
+    results.innerHTML = "";
+
+
+    items.forEach(
+
+        function(item) {
+
+            const result =
+                document.createElement(
+                    "div"
+                );
+
+
+            result.className =
+                "result";
+
+
+            /*
+               Search result properties
+            */
+
+            const properties =
+                item.properties || {};
+
+
+            const title =
+                properties.name ||
+                item.title ||
+                "Unknown";
+
+
+            const description =
+                properties.description ||
+                item.description ||
+                "";
+
+
+            const titleElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            titleElement.className =
+                "resultTitle";
+
+
+            titleElement.innerText =
+                title;
+
+
+            const addressElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            addressElement.className =
+                "resultAddress";
+
+
+            addressElement.innerText =
+                description;
+
+
+            result.appendChild(
+                titleElement
+            );
+
+
+            result.appendChild(
+                addressElement
+            );
+
+
+            result.addEventListener(
+
+                "click",
+
+                function() {
+
+                    selectSearchResult(
+                        item
+                    );
+
+                }
+
+            );
+
+
+            results.appendChild(
+                result
+            );
+
+        }
+
+    );
+
+
+    results.style.display =
+        "block";
+
+}
+
+
+/* ============================================================
+   SELECT RESULT
+   ============================================================ */
+
+function selectSearchResult(
+    item
+) {
+
+    results.style.display =
+        "none";
+
+
+    /*
+       Geometry contains coordinates.
+    */
+
+    if (
+        !item.geometry ||
+        !item.geometry.coordinates
+    ) {
+
+        setStatus(
+            "Destination coordinates unavailable"
+        );
+
+        return;
+
+    }
+
+
+    destinationPosition =
+        item.geometry.coordinates;
+
+
+    console.log(
+        "Destination:",
+        destinationPosition
+    );
+
+
+    /*
+       Move map.
+    */
+
+    map.setLocation({
+
+        center:
+            destinationPosition,
+
+        zoom: 16,
+
+        duration: 700
+
+    });
+
+
+    /*
+       Create destination marker.
+    */
+
+    createDestinationMarker();
+
+
+    /*
+       Destination information.
+    */
+
+    const properties =
+        item.properties || {};
+
+
+    destinationTitle.innerText =
+        properties.name ||
+        item.title ||
+        "Destination";
+
+
+    destinationAddress.innerText =
+        properties.description ||
+        item.description ||
+        "";
+
+
+    destinationPanel.style.display =
+        "block";
+
+
+    setStatus(
+        "Destination selected"
+    );
+
+}
+
+
+/* ============================================================
+   DESTINATION MARKER
+   ============================================================ */
+
+function createDestinationMarker() {
+
+    /*
+       Remove old marker.
+    */
+
+    if (
+        destinationMarker
+    ) {
+
+        map.removeChild(
+            destinationMarker
+        );
+
+        destinationMarker =
+            null;
+
+    }
+
+
+    const {
+        YMapMarker
+    } = ymaps3;
+
+
+    /*
+       HTML marker.
+    */
+
+    const markerElement =
+        document.createElement(
+            "div"
+        );
+
+
+    markerElement.style.width =
+        "34px";
+
+
+    markerElement.style.height =
+        "34px";
+
+
+    markerElement.style.borderRadius =
+        "50%";
+
+
+    markerElement.style.background =
+        "#e53935";
+
+
+    markerElement.style.border =
+        "5px solid white";
+
+
+    markerElement.style.boxShadow =
+        "0 3px 10px rgba(0,0,0,.5)";
+
+
+    /*
+       Create marker.
+    */
+
+    destinationMarker =
+        new YMapMarker(
+
+            {
+
+                coordinates:
+                    destinationPosition,
+
+                draggable:
+                    false
+
+            },
+
+            markerElement
+
+        );
+
+
+    map.addChild(
+        destinationMarker
+    );
+
+}
+
+
+/* ============================================================
+   CLEAR DESTINATION
+   ============================================================ */
+
+clearButton.addEventListener(
+
     "click",
+
     function() {
 
-        if (destinationMarker) {
+        if (
+            destinationMarker
+        ) {
 
             map.removeChild(
                 destinationMarker
@@ -981,7 +1507,7 @@ clearDestination.addEventListener(
             null;
 
 
-        destination.style.display =
+        destinationPanel.style.display =
             "none";
 
 
@@ -989,26 +1515,50 @@ clearDestination.addEventListener(
             "";
 
 
-        status.innerText =
-            "Ready";
+        results.innerHTML =
+            "";
+
+
+        results.style.display =
+            "none";
+
+
+        setStatus(
+            "Ready"
+        );
 
     }
+
 );
 
 
-/* LOCATION BUTTON */
+/* ============================================================
+   LOCATION BUTTON
+   ============================================================ */
 
 locationButton.addEventListener(
+
     "click",
-    getMyLocation
+
+    function() {
+
+        getMyLocation();
+
+    }
+
 );
 
 
-/* START */
+/* ============================================================
+   START APPLICATION
+   ============================================================ */
 
 initMap();
+
 
 </script>
 
 </body>
+
 </html>
+```
