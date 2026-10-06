@@ -18,11 +18,11 @@
   #go { background:var(--blue); border-color:var(--blue); color:#fff; }
   #msg { top:96px; left:12px; padding:10px 14px; font-size:18px; color:var(--mut); display:none; z-index:5; max-width:700px; }
   #me { right:12px; top:96px; z-index:5; }
-  #info { left:12px; right:12px; bottom:12px; padding:14px 18px; display:none; gap:18px; align-items:center; z-index:5; max-width:760px; }
+  #info { left:12px; right:12px; bottom:12px; padding:14px 18px; display:none; gap:14px; align-items:center; z-index:5; max-width:760px; }
   #info .main { flex:1; min-width:0; }
-  #sum { font-size:26px; font-weight:500; }
-  #sum small { font-size:17px; font-weight:400; color:var(--mut); }
-  #next { font-size:18px; color:var(--mut); margin-top:4px; }
+  #name { font-size:22px; font-weight:500; }
+  #desc { font-size:16px; color:var(--mut); margin-top:2px; }
+  #route { background:var(--blue); border-color:var(--blue); color:#fff; }
   #cancel { background:var(--red); border-color:var(--red); color:#fff; }
   ymaps[class*="suggest"] { font-size:20px; }
 </style>
@@ -38,9 +38,10 @@
 <button id="me" class="card" aria-label="My location">My location</button>
 <div id="info" class="card">
   <div class="main">
-    <div id="sum"></div>
-    <div id="next"></div>
+    <div id="name"></div>
+    <div id="desc"></div>
   </div>
+  <button id="route">Start route</button>
   <button id="cancel">Cancel</button>
 </div>
 
@@ -50,7 +51,7 @@
   var GEO_KEY = "55379b3b-a1e2-45b3-b313-b8d446e39970";
   var LANG = "en_US";
 
-  var map, mePoint = null, meMark = null, route = null, follow = true;
+  var map, mePoint = null, meMark = null, destMark = null, dest = null, follow = true;
   var $ = function (id) { return document.getElementById(id); };
 
   function say(t) {
@@ -71,7 +72,7 @@
         map.setCenter(mePoint, 15);
       } else {
         meMark.geometry.setCoordinates(mePoint);
-        if (follow && !route) map.setCenter(mePoint);
+        if (follow && !dest) map.setCenter(mePoint);
       }
     }, function (e) { say("No location: " + e.message); },
     { enableHighAccuracy:true, maximumAge:1000 });
@@ -79,14 +80,15 @@
     $("go").onclick = search;
     $("q").onkeydown = function (e) { if (e.key === "Enter") search(); };
     $("me").onclick = function () { follow = true; if (mePoint) map.setCenter(mePoint, 16); };
-    $("cancel").onclick = clearRoute;
+    $("cancel").onclick = clearDest;
+    $("route").onclick = startRoute;
     map.events.add("actionbegin", function () { follow = false; });
   }
 
   function search() {
     var text = $("q").value.trim();
     if (!text) { say("Enter an address or place"); return; }
-    say(mePoint ? "Searching…" : "No location, routing from map center. Searching…");
+    say("Searching…");
     var c = mePoint || map.getCenter();
     var url = "https://geocode-maps.yandex.ru/1.x/?format=json&results=1&lang=" + LANG +
       "&apikey=" + GEO_KEY + "&ll=" + c[1] + "," + c[0] + "&spn=0.5,0.5" +
@@ -97,40 +99,36 @@
     }).then(function (d) {
       var m = d.response.GeoObjectCollection.featureMember;
       if (!m.length) { say("Nothing found. Refine the address."); return; }
-      var pos = m[0].GeoObject.Point.pos.split(" ");
+      var g = m[0].GeoObject, pos = g.Point.pos.split(" ");
       say("");
-      buildRoute([parseFloat(pos[1]), parseFloat(pos[0])]);
+      showDest([parseFloat(pos[1]), parseFloat(pos[0])], g.name, g.description || "");
     }).catch(function (e) { say("Search error: " + e.message); });
   }
 
-  function buildRoute(dest) {
-    clearRoute();
-    route = new ymaps.multiRouter.MultiRoute(
-      { referencePoints:[mePoint || map.getCenter(), dest], params:{ routingMode:"auto", results:1 } },
-      { boundsAutoApply:true, routeActiveStrokeWidth:9, routeActiveStrokeColor:"#3b8cf0" }
-    );
-    map.geoObjects.add(route);
-    route.model.events.add("requestsuccess", function () {
-      var a = route.getActiveRoute();
-      if (!a) return;
-      var dist = a.properties.get("distance").text;
-      var dur = (a.properties.get("durationInTraffic") || a.properties.get("duration")).text;
-      $("sum").innerHTML = dur + ' <small>· ' + dist + ' · with traffic</small>';
-      var seg = a.getPaths().get(0).getSegments().get(0);
-      $("next").textContent = seg ? "Next: " + seg.properties.get("text") : "";
-      $("info").style.display = "flex";
-    });
-    route.model.events.add("requestfail", function (e) {
-      var er = e.get("error");
-      console.log("route error", er);
-      say("Yandex could not build the route: " + (er && er.message ? er.message : "unknown reason"));
-    });
+  function showDest(pt, name, desc) {
+    clearDest();
+    dest = pt;
+    destMark = new ymaps.Placemark(pt, {}, { preset:"islands#redDotIcon" });
+    map.geoObjects.add(destMark);
+    map.setCenter(pt, 15);
+    $("name").textContent = name;
+    $("desc").textContent = desc;
+    $("info").style.display = "flex";
   }
 
-  function clearRoute() {
-    if (route) { map.geoObjects.remove(route); route = null; }
+  function clearDest() {
+    if (destMark) { map.geoObjects.remove(destMark); destMark = null; }
+    dest = null;
     $("info").style.display = "none";
     say("");
+  }
+
+  // Opens the route in Yandex Maps (real Yandex route with traffic and ETA)
+  function startRoute() {
+    if (!dest) return;
+    var from = mePoint ? mePoint[0] + "," + mePoint[1] : "";
+    var url = "https://yandex.com/maps/?rtext=" + from + "~" + dest[0] + "," + dest[1] + "&rtt=auto";
+    window.location.href = url;
   }
 
   var s = document.createElement("script");
