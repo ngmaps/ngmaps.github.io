@@ -120,13 +120,39 @@
       $("info").style.display = "flex";
     });
     route.model.events.add("requestfail", function (e) {
-      var er = e.get("error");
-      console.log("route error", er);
-      say("Маршрут не построен: " + (er && er.message ? er.message : "причина неизвестна"));
+      console.log("route error", e.get("error"));
+      map.geoObjects.remove(route); route = null;
+      osrmRoute(mePoint || map.getCenter(), dest);
     });
   }
 
+  var poly = null;
+  var TXT = { "left":"налево", "right":"направо", "straight":"прямо", "slight left":"левее",
+              "slight right":"правее", "sharp left":"резко налево", "sharp right":"резко направо", "uturn":"разворот" };
+
+  // Запасной маршрутизатор (OpenStreetMap), если маршрутизатор Яндекса недоступен для ключа
+  function osrmRoute(a, b) {
+    say("Строю маршрут запасным способом…");
+    var u = "https://router.project-osrm.org/route/v1/driving/" + a[1] + "," + a[0] + ";" +
+            b[1] + "," + b[0] + "?overview=full&geometries=geojson&steps=true";
+    fetch(u).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.code !== "Ok") throw new Error(d.code);
+      var r0 = d.routes[0];
+      poly = new ymaps.Polyline(r0.geometry.coordinates.map(function (c) { return [c[1], c[0]]; }),
+                                {}, { strokeColor:"#3b8cf0", strokeWidth:8 });
+      map.geoObjects.add(poly);
+      map.setBounds(poly.geometry.getBounds(), { checkZoomRange:true, zoomMargin:[120, 40, 120, 40] });
+      var steps = r0.legs[0].steps, st = steps[1];
+      $("sum").innerHTML = Math.round(r0.duration / 60) + ' мин <small>· ' + (r0.distance / 1000).toFixed(1) + ' км</small>';
+      $("next").textContent = st ? "Через " + Math.round(steps[0].distance) + " м: " +
+        (TXT[st.maneuver.modifier] || "по маршруту") + (st.name ? ", " + st.name : "") : "";
+      $("info").style.display = "flex";
+      say("");
+    }).catch(function (e) { say("Маршрут не построен: " + e.message); });
+  }
+
   function clearRoute() {
+    if (poly) { map.geoObjects.remove(poly); poly = null; }
     if (route) { map.geoObjects.remove(route); route = null; }
     $("info").style.display = "none";
     say("");
