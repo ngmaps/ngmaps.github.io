@@ -3,7 +3,7 @@
   st.textContent = '[class*="-gotoymaps"],[class*="-gototech"]{display:none!important}';
   document.head.appendChild(st);
   const d = document.createElement('div'); d.id = 'diagBox';
-  d.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:60vw;font:12px/1.3 monospace;color:#fff;background:rgba(0,0,0,.65);padding:4px 8px;border-radius:8px;pointer-events:none;word-break:break-all';
+  d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:8px;z-index:99999;max-width:50vw;font:14px/1.3 monospace;color:#fff;background:rgba(0,0,0,.65);padding:4px 8px;border-radius:8px;pointer-events:none;word-break:break-all';
   d.textContent = 'fix.js v6 OK';
   document.body.appendChild(d); })();
 window.setDiag = function(t){ const d = document.getElementById('diagBox'); if (d) d.textContent = 'fix.js v6 | ' + t; };
