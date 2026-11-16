@@ -1,66 +1,118 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#111111">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NG Maps">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <title>NG Maps</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-:root{--bg:rgba(28,30,34,.80);--bg2:rgba(255,255,255,.07);--fg:#f4f5f7;--mut:#9aa0a8;--acc:#22c3a6;--accfg:#04201b;--line:rgba(255,255,255,.08)}
-body.light{--bg:rgba(250,250,251,.85);--bg2:rgba(0,0,0,.05);--fg:#16181c;--mut:#6b7079;--line:rgba(0,0,0,.08)}
+:root{--bg:rgba(28,30,34,.82);--bg2:rgba(255,255,255,.08);--fg:#f4f5f7;--mut:#9aa0a8;--acc:#22c3a6;--accfg:#04201b;--line:rgba(255,255,255,.08)}
+body.light{--bg:rgba(250,250,251,.88);--bg2:rgba(0,0,0,.06);--fg:#16181c;--mut:#6b7079;--line:rgba(0,0,0,.08)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:20px;background:#0e0f11}
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Georgian",sans-serif;font-size:20px;background:#0e0f11;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 #map{position:absolute;inset:0}
+body.nightmap #map [class*="ground-pane"]{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.92)}
 .hidden{display:none!important}
 .glass{background:var(--bg);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .btn{background:var(--bg2);color:var(--fg);border:none;border-radius:16px;font-size:22px;min-width:56px;height:56px;padding:0 20px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:transform .1s}
-.btn:active{transform:scale(.95)}
+.btn:active{transform:scale(.94)}
 .green{background:var(--acc);color:var(--accfg);font-weight:600}
-.big{height:64px;font-size:22px;padding:0 28px}
-#panel{position:absolute;top:20px;left:20px;bottom:20px;width:min(440px,calc(100% - 130px));display:flex;flex-direction:column;gap:14px;z-index:1000;pointer-events:none}
+.big{height:64px;font-size:22px;padding:0 22px}
+#panel{position:absolute;top:calc(16px + env(safe-area-inset-top));left:calc(16px + env(safe-area-inset-left));bottom:calc(40px + env(safe-area-inset-bottom));width:min(440px,calc(100% - 120px));display:flex;flex-direction:column;gap:12px;z-index:10;pointer-events:none}
 #panel>*{pointer-events:auto}
-#top{display:flex;flex-direction:column;gap:10px}
-#searchBox{display:flex;align-items:center;gap:6px;border-radius:22px;padding:6px 6px 6px 20px}
-#q{flex:1;min-width:0;height:56px;font-size:22px;border:none;background:transparent;color:var(--fg);outline:none;font-family:inherit}
+#top{display:flex;flex-direction:column;gap:10px;min-height:0}
+#searchBox{display:flex;align-items:center;gap:6px;border-radius:22px;padding:6px 6px 6px 20px;flex:none}
+#q{flex:1;min-width:0;height:56px;font-size:22px;border:none;background:transparent;color:var(--fg);outline:none;font-family:inherit;-webkit-user-select:text;user-select:text}
 #q::placeholder{color:var(--mut)}
-#qBtn{background:transparent}
-#results{border-radius:22px;max-height:60vh;overflow:auto;padding:6px}
-.item{padding:14px 16px;border-radius:14px;cursor:pointer}
+#qBtn,#qCancel{background:transparent}
+#results{border-radius:22px;overflow:auto;padding:6px;min-height:0}
+.item{padding:13px 16px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:10px}
 .item:active{background:var(--bg2)}
+.item .mid{flex:1;min-width:0}
 .nm{color:var(--fg);font-size:21px;display:flex;justify-content:space-between;gap:12px}
+.nm span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ad{color:var(--mut);font-size:16px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dist{color:var(--acc);font-size:17px;white-space:nowrap}
-.msg,.hdr{padding:12px 16px;color:var(--mut);font-size:16px;text-transform:uppercase;letter-spacing:.8px}
-#banner{border-radius:22px;display:flex;align-items:center;gap:18px;padding:18px 22px}
+.del{color:#ef4444;font-size:22px;padding:6px 10px}
+.msg,.hdr{padding:12px 16px 6px;color:var(--mut);font-size:15px;text-transform:uppercase;letter-spacing:.8px;display:flex;justify-content:space-between}
+.hdr a{color:var(--acc);text-transform:none;letter-spacing:0;font-size:17px;cursor:pointer}
+.star{color:#f5c542}
+.chips{display:flex;gap:8px;padding:6px 6px 2px}
+.chip{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--bg2);color:var(--fg);font-size:19px;cursor:pointer}
+.chip small{display:block;color:var(--mut);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .ic{width:38px;height:38px;border-radius:12px;background:var(--acc);color:var(--accfg);display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.chip.off .ic{background:var(--bg2);color:var(--mut)}
+#banner{border-radius:22px;display:flex;align-items:center;gap:18px;padding:18px 22px;flex:none}
 #bArrow{width:86px;height:86px;border-radius:20px;background:var(--acc);color:var(--accfg);font-size:58px;display:flex;align-items:center;justify-content:center;flex:none}
 #bDist{font-size:42px;font-weight:700;color:var(--fg);line-height:1.1}
 #bText{font-size:21px;color:var(--mut);margin-top:4px}
-#bottom{margin-top:auto;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:0}
+#card{margin-top:auto;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}
+#card.attop{margin-top:0}
 #dName{font-size:22px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #dStats{color:var(--mut);font-size:19px;margin-top:6px}
-#steps{overflow:auto;min-height:0;max-height:38vh;border-top:1px solid var(--line);padding-top:6px}
-.st{display:flex;align-items:center;gap:14px;padding:10px 4px;border-bottom:1px solid var(--line)}
+#dStats b{color:var(--acc);font-weight:600}
+.nextstop{font-size:16px;color:var(--mut);border-top:1px solid var(--line);padding-top:10px}
+.nextstop b{color:var(--fg)}
+.stops{display:flex;flex-direction:column;gap:6px}
+.stop{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:14px;background:var(--bg2);color:var(--fg);font-size:18px}
+.stop .dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}
+.stop .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop .x{color:var(--mut);font-size:20px;padding:4px 8px;cursor:pointer}
+.add{color:var(--acc);font-size:18px;padding:6px 12px;cursor:pointer}
+.routes{display:flex;flex-direction:column;gap:8px}
+.rt{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:16px;background:var(--bg2);border:2px solid transparent;color:var(--fg);cursor:pointer}
+.rt.sel{border-color:var(--acc);background:rgba(34,195,166,.12)}
+.rt .tm{font-size:25px;font-weight:700;min-width:104px;white-space:nowrap}
+.rt .in{flex:1;min-width:0;font-size:16px;color:var(--mut)}
+.rt .in div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt .in b{color:var(--fg);font-weight:600}
+.rt .in .jam{color:#f87171}
+.rt .tag{font-size:13px;padding:3px 8px;border-radius:8px;background:var(--acc);color:var(--accfg);font-weight:600;white-space:nowrap}
+#steps{border-top:1px solid var(--line);padding-top:6px}
+.st{display:flex;align-items:center;gap:14px;padding:9px 4px;border-bottom:1px solid var(--line)}
 .st:last-child{border-bottom:none}
 .st .a{width:40px;height:40px;border-radius:12px;background:var(--bg2);color:var(--fg);display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
 .st .t{flex:1;color:var(--fg);font-size:18px}
 .st .d{color:var(--mut);font-size:16px;white-space:nowrap}
-#actions{display:flex;gap:10px}
+#actions{display:flex;gap:8px;flex:none}
 #actions #go{flex:1}
-#side{position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;border-radius:24px;padding:6px;gap:4px;z-index:1000}
-#side .btn{width:64px;height:64px;background:transparent;font-size:26px;padding:0}
+#side{position:absolute;right:calc(16px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;border-radius:24px;padding:6px;gap:4px;z-index:10}
+#side .btn{width:62px;height:62px;background:transparent;font-size:26px;padding:0;display:flex;align-items:center;justify-content:center}
 #side .btn.on{background:var(--acc);color:var(--accfg)}
-#speed{position:absolute;right:20px;bottom:24px;z-index:1000;width:104px;height:104px;border-radius:50%;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:40px;font-weight:700}
+#side .lang{font-size:17px;font-weight:700}
+#speed{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:calc(44px + env(safe-area-inset-bottom));z-index:10;width:100px;height:100px;border-radius:50%;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:38px;font-weight:700}
 #speed small{font-size:14px;font-weight:400;color:var(--mut)}
-#toast{position:absolute;left:50%;top:24px;transform:translate(-50%,-20px);background:var(--bg);color:var(--fg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);padding:14px 26px;border-radius:18px;font-size:19px;z-index:2000;opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center}
+#toast{position:absolute;left:50%;top:calc(20px + env(safe-area-inset-top));transform:translate(-50%,-20px);background:var(--bg);color:var(--fg);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);padding:14px 26px;border-radius:18px;font-size:19px;z-index:60;opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-.car{background:none;border:none}
-.pin{width:30px;height:30px;border-radius:50%;background:#fff;border:8px solid var(--acc);box-shadow:0 3px 12px rgba(0,0,0,.5)}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--bg);backdrop-filter:blur(18px);border-radius:18px}
-.leaflet-popup-content{margin:10px}
-.leaflet-container a.leaflet-popup-close-button{display:none}
-.leaflet-control-attribution{font-size:11px;background:transparent!important;color:var(--mut)}
-.leaflet-control-attribution a{color:var(--mut)}
+#dlg{position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+.dbox{width:min(500px,92%);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:14px;color:var(--fg)}
+.dbox h3{margin:0;font-size:22px}
+.dbox p{margin:0;color:var(--mut);font-size:16px}
+.dbox input,.dbox textarea{width:100%;font-size:20px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--fg);font-family:inherit;outline:none;-webkit-user-select:text;user-select:text}
+.dbox textarea{height:220px;font-size:14px;font-family:monospace}
+.drow{display:flex;gap:8px;flex-wrap:wrap}
+.drow .btn{flex:1;font-size:19px;padding:0 12px}
+.car{position:absolute;left:-27px;top:-27px;width:54px;height:54px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+.carRot{width:54px;height:54px}
+.pin{position:absolute;left:-15px;top:-15px;width:30px;height:30px;border-radius:50%;background:#fff;border:8px solid #22c3a6;box-shadow:0 3px 12px rgba(0,0,0,.5)}
+.num{position:absolute;left:-17px;top:-17px;width:34px;height:34px;border-radius:50%;background:#fff;color:#0b6e5f;border:4px solid #22c3a6;font:800 16px system-ui,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.bub{position:absolute;transform:translate(-50%,-50%);padding:6px 12px;border-radius:12px;font:700 17px system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.45);white-space:nowrap;cursor:pointer}
+.bub.s{background:#22c3a6;color:#04201b}
+.bub.a{background:rgba(28,30,34,.92);color:#f4f5f7}
+.bub small{font-weight:400;opacity:.85}
+@media (max-width:700px){
+  #panel{width:auto;right:calc(86px + env(safe-area-inset-right))}
+  #bDist{font-size:34px}#bArrow{width:70px;height:70px;font-size:46px}
+  #side .btn{width:50px;height:50px;font-size:21px}
+  .rt .tm{font-size:21px;min-width:84px}
+}
 </style>
 </head>
 <body>
@@ -69,8 +121,9 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-syst
 <div id="panel">
   <div id="top">
     <div id="searchBox" class="glass">
-      <input id="q" type="search" placeholder="Куда едем?" autocomplete="off" enterkeyhint="search">
-      <button class="btn" id="qBtn" title="Найти">🔍</button>
+      <input id="q" type="search" autocomplete="off" enterkeyhint="search">
+      <button class="btn hidden" id="qCancel">✕</button>
+      <button class="btn" id="qBtn">🔍</button>
     </div>
     <div id="results" class="glass hidden"></div>
   </div>
@@ -80,48 +133,164 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,-apple-syst
     <div><div id="bDist"></div><div id="bText"></div></div>
   </div>
 
-  <div id="bottom" class="glass hidden">
+  <div id="card" class="glass hidden">
+    <div id="stopsBox" class="stops"></div>
+    <div id="routesBox" class="routes"></div>
     <div id="info"><div id="dName"></div><div id="dStats"></div></div>
+    <div id="nextLine" class="nextstop"></div>
     <div id="steps"></div>
     <div id="actions">
-      <button class="btn big green" id="go">Поехали</button>
-      <button class="btn big hidden" id="demo">Демо</button>
-      <button class="btn big" id="stop" title="Отмена">✕</button>
+      <button class="btn big green" id="go"></button>
+      <button class="btn big" id="demo">Demo</button>
+      <button class="btn big" id="list">☰</button>
+      <button class="btn big" id="star">☆</button>
+      <button class="btn big" id="skip">⏭</button>
+      <button class="btn big" id="stop">✕</button>
     </div>
   </div>
 </div>
 
 <div id="side" class="glass">
-  <button class="btn" id="zin" title="Приблизить">+</button>
-  <button class="btn" id="zout" title="Отдалить">−</button>
-  <button class="btn on" id="center" title="Следовать за машиной">◎</button>
-  <button class="btn" id="theme" title="День/ночь">☀</button>
-  <button class="btn" id="voice" title="Голос">🔊</button>
+  <button class="btn" id="zin">+</button>
+  <button class="btn" id="zout">−</button>
+  <button class="btn on" id="center">◎</button>
+  <button class="btn" id="traffic">🚦</button>
+  <button class="btn" id="layers">🗺</button>
+  <button class="btn" id="theme">☀</button>
+  <button class="btn" id="voice">🔊</button>
+  <button class="btn lang" id="lang">EN</button>
+  <button class="btn" id="fs">⛶</button>
+  <button class="btn hidden" id="install">⬇</button>
 </div>
 
-<div id="speed" class="glass hidden"><span id="spd">0</span><small>км/ч</small></div>
-
+<div id="speed" class="glass hidden"><span id="spd">0</span><small id="spdU"></small></div>
+<div id="dlg" class="hidden"></div>
 <div id="toast"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 'use strict';
+/* ================= ключи Яндекса ================= */
+const YKEY = 'fc5db2c9-c6bd-49fe-9ab7-71d08afae06a';      // JavaScript API
+const YSUGGEST = 'f382b839-b555-4f50-82b6-7b45bb9769d5';  // API Геосаджеста
+
 /* ================= утилиты ================= */
 const $ = id => document.getElementById(id);
+const show = (id, v) => $(id).classList.toggle('hidden', !v);
 const store = {
   get(k, d){ try{ const v = localStorage.getItem('ngm_'+k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem('ngm_'+k, JSON.stringify(v)); }catch(e){} }
 };
 const SIM = /[?&]sim=1/.test(location.search);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const lc = s => s.charAt(0).toLowerCase() + s.slice(1);
-
 let toastT;
 function toast(msg, ms = 3000){
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
 }
 
-/* ================= геометрия ================= */
+/* ================= языки: EN / KA / RU ================= */
+const LANGS = ['en', 'ka', 'ru'];
+const API_LANG = { en:'en_US', ka:'en_US', ru:'ru_RU' };   // у Яндекса нет грузинского — карта на английском
+const VOICE = { en:'en-US', ka:'ka-GE', ru:'ru-RU' };
+let lang = store.get('lang', 'en'); if (!LANGS.includes(lang)) lang = 'en';
+
+const L = {
+en: {
+  where:'Where to?', addStopPh:'Add a stop…', go:'Go', routeHere:'Route here', home:'Home', work:'Work',
+  favs:'Favorites', recent:'Recent', edit:'Edit', done:'Done', exportFav:'Export for all devices',
+  addStop:'Add stop', myLoc:'My location', fastest:'Fastest', jam:'traffic', eta:'ETA', via:'via',
+  min:'min', h:'h', km:'km', m:'m', kmh:'km/h', then:'Then', stop:'Stop', point:'Point on map', coords:'Coordinates',
+  building:'Finding routes…', noRoute:'Could not build a route', noTraffic:'no traffic data',
+  searching:'Searching…', nothing:'Nothing found', searchErr:'Search error',
+  noGps:'No GPS signal', gpsDenied:'Location access denied — allow it in browser settings', gpsNone:'Geolocation is not supported',
+  waitGps:'Waiting for GPS…', fromCenter:'No GPS — routing from map center', rerouting:'Rerouting…',
+  faster:n => 'Faster route found — saves ' + n + ' min', arrivedAt:n => 'Arrived: ' + n, stopDone:n => 'Stop reached: ' + n,
+  stopAdded:'Stop added', trafficOn:'Traffic on', trafficOff:'Traffic off', voiceOn:'Voice on',
+  map:'Map', hybrid:'Hybrid', sat:'Satellite', noFs:'Fullscreen is not available', apiFail:'Yandex map failed to load — check internet and API key',
+  setHint:k => 'Find a place, tap ☆ and choose “' + k + '”', saveTitle:'Save place', name:'Name', save:'Favorite', cancel:'Cancel',
+  saved:'Saved', removed:'Removed', copy:'Copy', copied:'Copied', close:'Close',
+  exportHelp:'Paste this text into the file favorites.json in your GitHub repository — the list will appear on every device.',
+  demoHint:'Demo mode: pick a place and press “Demo”', letsGo:'Let’s go', arrive:'You have arrived',
+  sayStop:'You have reached your stop', onto:s => ' onto ' + s, rexit:n => 'At the roundabout, take exit ' + n,
+  inDist:(d, t) => 'In ' + d + ' meters, ' + lc(t),
+  turn:{ left:'Turn left', right:'Turn right', 'slight-left':'Bear left', 'slight-right':'Bear right',
+    'sharp-left':'Turn sharp left', 'sharp-right':'Turn sharp right', uturn:'Make a U-turn', straight:'Continue straight',
+    roundabout:'Enter the roundabout', 'exit-roundabout':'Exit the roundabout', merge:'Merge',
+    'exit-left':'Take the exit on the left', 'exit-right':'Take the exit on the right', 'keep-left':'Keep left', 'keep-right':'Keep right' }
+},
+ka: {
+  where:'სად მივდივართ?', addStopPh:'გაჩერების დამატება…', go:'წავედით', routeHere:'მარშრუტი აქ', home:'სახლი', work:'სამსახური',
+  favs:'რჩეულები', recent:'ბოლო', edit:'რედაქტირება', done:'მზადაა', exportFav:'ექსპორტი ყველა მოწყობილობისთვის',
+  addStop:'გაჩერების დამატება', myLoc:'ჩემი მდებარეობა', fastest:'უსწრაფესი', jam:'საცობი', eta:'ჩასვლა', via:'გავლით:',
+  min:'წთ', h:'სთ', km:'კმ', m:'მ', kmh:'კმ/სთ', then:'შემდეგ', stop:'გაჩერება', point:'წერტილი რუკაზე', coords:'კოორდინატები',
+  building:'მარშრუტების ძებნა…', noRoute:'მარშრუტი ვერ აიგო', noTraffic:'საცობების გარეშე',
+  searching:'ძებნა…', nothing:'ვერაფერი მოიძებნა', searchErr:'ძებნის შეცდომა',
+  noGps:'GPS სიგნალი არ არის', gpsDenied:'მდებარეობაზე წვდომა აკრძალულია — დაუშვით ბრაუზერის პარამეტრებში', gpsNone:'გეოლოკაცია არ არის მხარდაჭერილი',
+  waitGps:'GPS-ის მოლოდინი…', fromCenter:'GPS არ არის — მარშრუტი რუკის ცენტრიდან', rerouting:'მარშრუტის განახლება…',
+  faster:n => 'ნაპოვნია უფრო სწრაფი მარშრუტი — ' + n + ' წთ-ით ნაკლები', arrivedAt:n => 'მიხვედით: ' + n, stopDone:n => 'გაჩერება გავლილია: ' + n,
+  stopAdded:'გაჩერება დაემატა', trafficOn:'საცობები ჩართულია', trafficOff:'საცობები გამორთულია', voiceOn:'ხმა ჩართულია',
+  map:'რუკა', hybrid:'ჰიბრიდი', sat:'სატელიტი', noFs:'სრული ეკრანი მიუწვდომელია', apiFail:'რუკა ვერ ჩაიტვირთა — შეამოწმეთ ინტერნეტი და გასაღები',
+  setHint:k => 'იპოვეთ ადგილი, დააჭირეთ ☆ და აირჩიეთ „' + k + '“', saveTitle:'ადგილის შენახვა', name:'სახელი', save:'რჩეული', cancel:'გაუქმება',
+  saved:'შენახულია', removed:'წაშლილია', copy:'კოპირება', copied:'დაკოპირდა', close:'დახურვა',
+  exportHelp:'ჩასვით ეს ტექსტი ფაილში favorites.json თქვენს GitHub რეპოზიტორიაში — სია გამოჩნდება ყველა მოწყობილობაზე.',
+  demoHint:'დემო რეჟიმი: აირჩიეთ ადგილი და დააჭირეთ „Demo“', letsGo:'წავედით', arrive:'თქვენ მიხვედით დანიშნულების ადგილზე',
+  sayStop:'თქვენ მიხვედით გაჩერებაზე', onto:s => ' · ' + s, rexit:n => 'წრიულზე — გასასვლელი ' + n,
+  inDist:(d, t) => d + ' მეტრში ' + t,
+  turn:{ left:'მოუხვიეთ მარცხნივ', right:'მოუხვიეთ მარჯვნივ', 'slight-left':'ოდნავ მარცხნივ', 'slight-right':'ოდნავ მარჯვნივ',
+    'sharp-left':'მკვეთრად მარცხნივ', 'sharp-right':'მკვეთრად მარჯვნივ', uturn:'მობრუნდით', straight:'იარეთ პირდაპირ',
+    roundabout:'შედით წრიულზე', 'exit-roundabout':'გადით წრიულიდან', merge:'შეუერთდით მოძრაობას',
+    'exit-left':'გასასვლელი მარცხნივ', 'exit-right':'გასასვლელი მარჯვნივ', 'keep-left':'დაიჭირეთ მარცხნივ', 'keep-right':'დაიჭირეთ მარჯვნივ' }
+},
+ru: {
+  where:'Куда едем?', addStopPh:'Добавить остановку…', go:'Поехали', routeHere:'Маршрут сюда', home:'Дом', work:'Работа',
+  favs:'Избранное', recent:'Недавние', edit:'Изменить', done:'Готово', exportFav:'Экспорт для всех устройств',
+  addStop:'Добавить остановку', myLoc:'Моё местоположение', fastest:'Быстрее', jam:'пробки', eta:'прибытие', via:'через',
+  min:'мин', h:'ч', km:'км', m:'м', kmh:'км/ч', then:'Далее', stop:'Остановка', point:'Точка на карте', coords:'Координаты',
+  building:'Ищу маршруты…', noRoute:'Не удалось построить маршрут', noTraffic:'без учёта пробок',
+  searching:'Ищу…', nothing:'Ничего не найдено', searchErr:'Ошибка поиска',
+  noGps:'Нет сигнала GPS', gpsDenied:'Доступ к геолокации запрещён — разрешите его в настройках браузера', gpsNone:'Геолокация не поддерживается',
+  waitGps:'Жду сигнал GPS…', fromCenter:'Нет GPS — маршрут от центра карты', rerouting:'Перестраиваю маршрут…',
+  faster:n => 'Найден маршрут быстрее — экономия ' + n + ' мин', arrivedAt:n => 'Вы прибыли: ' + n, stopDone:n => 'Остановка пройдена: ' + n,
+  stopAdded:'Остановка добавлена', trafficOn:'Пробки включены', trafficOff:'Пробки выключены', voiceOn:'Голос включён',
+  map:'Схема', hybrid:'Гибрид', sat:'Спутник', noFs:'Полноэкранный режим недоступен', apiFail:'Не загрузилась карта Яндекса — проверьте интернет и ключ',
+  setHint:k => 'Найдите место, нажмите ☆ и выберите «' + k + '»', saveTitle:'Сохранить место', name:'Название', save:'В избранное', cancel:'Отмена',
+  saved:'Сохранено', removed:'Удалено', copy:'Копировать', copied:'Скопировано', close:'Закрыть',
+  exportHelp:'Вставьте этот текст в файл favorites.json в репозитории на GitHub — список появится на всех устройствах.',
+  demoHint:'Демо-режим: выберите место и нажмите «Demo»', letsGo:'Поехали', arrive:'Вы прибыли',
+  sayStop:'Вы прибыли к остановке', onto:s => ' на ' + s, rexit:n => 'На круге — ' + n + '-й съезд',
+  inDist:(d, t) => 'Через ' + d + ' метров ' + lc(t),
+  turn:{ left:'Поверните налево', right:'Поверните направо', 'slight-left':'Плавно налево', 'slight-right':'Плавно направо',
+    'sharp-left':'Резко налево', 'sharp-right':'Резко направо', uturn:'Развернитесь', straight:'Продолжайте прямо',
+    roundabout:'Въезжайте на круг', 'exit-roundabout':'Съезжайте с круга', merge:'Перестройтесь',
+    'exit-left':'Съезд налево', 'exit-right':'Съезд направо', 'keep-left':'Держитесь левее', 'keep-right':'Держитесь правее' }
+}};
+const T = () => L[lang];
+
+const ARR = { left:'↰', right:'↱', 'slight-left':'↖', 'slight-right':'↗', 'sharp-left':'↰', 'sharp-right':'↱', uturn:'↶',
+  roundabout:'⟳', 'exit-roundabout':'⟳', merge:'⇡', 'exit-left':'↖', 'exit-right':'↗', 'keep-left':'↖', 'keep-right':'↗',
+  straight:'↑', arrive:'🏁', stop:'⚑' };
+function stepText(s, l){
+  const d = L[l || lang];
+  if (s.act === 'stop') return d.stop + ': ' + (s.name || '');
+  if (s.act === 'arrive') return d.arrive;
+  const on = s.street ? d.onto(s.street) : '';
+  if (s.act === 'roundabout' && s.exit) return d.rexit(s.exit) + on;
+  return (d.turn[s.act] || d.turn.straight) + on;
+}
+
+/* ================= голос ================= */
+let voiceOn = store.get('voice', true);
+function speechLang(){
+  if (lang !== 'ka') return lang;
+  try { return speechSynthesis.getVoices().some(v => /^ka/i.test(v.lang)) ? 'ka' : 'en'; } catch(e){ return 'en'; }
+}
+function say(fn){
+  if (!voiceOn || !('speechSynthesis' in window)) return;
+  try { const sl = speechLang(); speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(fn(sl)); u.lang = VOICE[sl]; speechSynthesis.speak(u); } catch(e){}
+}
+
+/* ================= геометрия и формат ================= */
 const R = 6371000, rad = Math.PI / 180;
 function hav(a, b){
   const dLat = (b[0]-a[0])*rad, dLng = (b[1]-a[1])*rad;
@@ -133,7 +302,6 @@ function bearing(a, b){
   const x = Math.cos(a[0]*rad)*Math.sin(b[0]*rad) - Math.sin(a[0]*rad)*Math.cos(b[0]*rad)*Math.cos((b[1]-a[1])*rad);
   return (Math.atan2(y, x)/rad + 360) % 360;
 }
-// расстояние от точки p до отрезка a-b (в метрах) и позиция проекции t∈[0,1]
 function segProj(p, a, b){
   const kx = 111320*Math.cos(p[0]*rad), ky = 110540;
   const ax = (a[1]-p[1])*kx, ay = (a[0]-p[0])*ky, bx = (b[1]-p[1])*kx, by = (b[0]-p[0])*ky;
@@ -142,247 +310,629 @@ function segProj(p, a, b){
   t = Math.max(0, Math.min(1, t));
   return { d: Math.hypot(ax + t*dx, ay + t*dy), t };
 }
-
-/* ================= форматирование ================= */
+const angDiff = (a, b) => ((b - a + 540) % 360) - 180;
+function cumDist(coords){
+  const cum = [0];
+  for (let i = 1; i < coords.length; i++) cum.push(cum[i-1] + hav(coords[i-1], coords[i]));
+  return cum;
+}
 function fmtDist(m){
-  if (m >= 10000) return Math.round(m/1000) + ' км';
-  if (m >= 1000) return (m/1000).toFixed(1).replace('.', ',') + ' км';
-  if (m >= 100) return Math.round(m/50)*50 + ' м';
-  return Math.max(0, Math.round(m/10)*10) + ' м';
+  const t = T(), dec = s => lang === 'en' ? s : s.replace('.', ',');
+  if (m >= 10000) return Math.round(m/1000) + ' ' + t.km;
+  if (m >= 1000) return dec((m/1000).toFixed(1)) + ' ' + t.km;
+  if (m >= 100) return Math.round(m/50)*50 + ' ' + t.m;
+  return Math.max(0, Math.round(m/10)*10) + ' ' + t.m;
 }
 function fmtTime(s){
-  const m = Math.max(1, Math.round(s/60));
-  return m < 60 ? m + ' мин' : Math.floor(m/60) + ' ч ' + (m%60) + ' мин';
+  const t = T(), m = Math.max(1, Math.round(s/60));
+  return m < 60 ? m + ' ' + t.min : Math.floor(m/60) + ' ' + t.h + ' ' + (m%60) + ' ' + t.min;
 }
 const clock = sec => new Date(Date.now() + sec*1000).toTimeString().slice(0, 5);
+const keyOf = p => (+p.lat).toFixed(5) + ',' + (+p.lng).toFixed(5);
 
-/* ================= манёвры ================= */
-const DIR = {left:'налево', right:'направо', 'slight left':'плавно налево', 'slight right':'плавно направо',
-  'sharp left':'резко налево', 'sharp right':'резко направо', straight:'прямо', uturn:'на разворот'};
-const ARROW = {left:'↰', right:'↱', 'slight left':'↖', 'slight right':'↗', 'sharp left':'↰', 'sharp right':'↱', straight:'↑', uturn:'↶'};
-function arrowOf(s){
-  const m = s.maneuver;
-  if (m.type === 'arrive') return '🏁';
-  if (m.type === 'roundabout' || m.type === 'rotary') return '⟳';
-  return ARROW[m.modifier] || '↑';
+/* ================= состояние ================= */
+let map, car, destMark, lineCasing, lineMain, linePast, trafficProv, BubLayout, NumLayout;
+let theme = store.get('theme', 'dark'), mtype = store.get('mtype', 1), trafficOn = store.get('traffic', true);
+const TYPES = ['yandex#map', 'yandex#hybrid', 'yandex#satellite'];
+
+let pos = null, lastPos = null, speed = 0, firstFix = true, follow = true, zoomAdj = 0;
+let shown = null, animFrom = null, target = null, animStart = 0, heading = 0, shownHeading = 0;
+let state = 'idle';            // idle | pick | routing | preview | nav
+let stops = [];                // точки маршрута, последняя — финиш
+let pick = null, adding = false, stepsOpen = false, favEdit = false;
+let alts = [], sel = 0, route = null, routeSrc = '', planSeq = 0, lastTl = 0;
+let altObjs = [], stopObjs = [];
+let simRunning = false, simTimer = null, refreshTimer = null;
+let offCount = 0, lastReroute = 0, rerouting = false;
+
+/* ================= избранное ================= */
+let favLocal = store.get('fav', []), favShared = [], favHidden = store.get('favHidden', []);
+function favAll(){
+  const seen = {}, out = [];
+  favLocal.forEach(f => { const k = keyOf(f); if (!seen[k]){ seen[k] = 1; out.push(f); } });
+  favShared.forEach(f => { const k = keyOf(f); if (!seen[k] && !favHidden.includes(k)){ seen[k] = 1; out.push(f); } });
+  return out;
 }
-function textOf(s){
-  const m = s.maneuver, t = m.type, mod = m.modifier || '', dir = DIR[mod] || '';
-  const on = s.name ? ' на ' + s.name : '';
-  const side = mod.includes('left') ? 'левее' : 'правее';
-  switch (t){
-    case 'depart': return 'Начните движение' + on;
-    case 'arrive': return 'Вы прибыли';
-    case 'roundabout': case 'rotary': return 'На круге — ' + (m.exit ? m.exit + '-й съезд' : 'съезд') + on;
-    case 'exit roundabout': case 'exit rotary': return 'Съезд с круга' + on;
-    case 'fork': return 'Держитесь ' + side + on;
-    case 'merge': return 'Перестройтесь ' + side + on;
-    case 'on ramp': case 'off ramp': return 'Съезд ' + dir + on;
-    case 'end of road': return 'В конце дороги ' + dir + on;
-  }
-  if (mod === 'uturn') return 'Развернитесь' + on;
-  if (mod === 'straight') return 'Продолжайте прямо' + on;
-  return 'Поверните ' + dir + on;
+const favFind = p => p && favAll().find(f => keyOf(f) === keyOf(p));
+const favKind = k => favAll().find(f => f.kind === k);
+function favSave(p, kind, name){
+  const k = keyOf(p);
+  favLocal = favLocal.filter(f => keyOf(f) !== k && !(kind !== 'fav' && f.kind === kind));
+  favHidden = favHidden.filter(h => h !== k);
+  if (kind !== 'fav') favShared.forEach(f => { if (f.kind === kind && !favHidden.includes(keyOf(f))) favHidden.push(keyOf(f)); });
+  favLocal.unshift({ kind, name: name || p.name, addr: p.addr || '', lat: p.lat, lng: p.lng });
+  store.set('fav', favLocal); store.set('favHidden', favHidden);
+}
+function favRemove(p){
+  const k = keyOf(p);
+  favLocal = favLocal.filter(f => keyOf(f) !== k);
+  if (favShared.some(f => keyOf(f) === k) && !favHidden.includes(k)) favHidden.push(k);
+  store.set('fav', favLocal); store.set('favHidden', favHidden);
+}
+function loadShared(){
+  fetch('favorites.json', { cache:'no-store' }).then(r => r.ok ? r.json() : []).then(a => {
+    favShared = (Array.isArray(a) ? a : []).filter(f => f && isFinite(f.lat) && isFinite(f.lng) && f.name)
+      .map(f => ({ kind: f.kind === 'home' || f.kind === 'work' ? f.kind : 'fav', name: String(f.name), addr: String(f.addr || ''), lat: +f.lat, lng: +f.lng }));
+  }).catch(() => {});
+}
+function addRecent(it){
+  let r = store.get('recent', []);
+  r = r.filter(x => keyOf(x) !== keyOf(it));
+  r.unshift({ name: it.name, addr: it.addr, lat: it.lat, lng: it.lng });
+  store.set('recent', r.slice(0, 8));
 }
 
-/* ================= голос ================= */
-let voiceOn = store.get('voice', true);
-function speak(text){
-  if (!voiceOn || !('speechSynthesis' in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; speechSynthesis.speak(u); } catch(e){}
+/* ================= диалоги ================= */
+function closeDlg(){ $('dlg').classList.add('hidden'); $('dlg').innerHTML = ''; }
+function openSaveDlg(p){
+  const t = T();
+  $('dlg').innerHTML = '<div class="dbox glass"><h3>' + esc(t.saveTitle) + '</h3><p>' + esc(p.addr || '') + '</p>' +
+    '<input id="favName" maxlength="40" placeholder="' + esc(t.name) + '" value="' + esc(p.name) + '">' +
+    '<div class="drow"><button class="btn big" data-k="home">⌂ ' + esc(t.home) + '</button><button class="btn big" data-k="work">💼 ' + esc(t.work) + '</button></div>' +
+    '<div class="drow"><button class="btn big green" data-k="fav">★ ' + esc(t.save) + '</button><button class="btn big" data-k="">' + esc(t.cancel) + '</button></div></div>';
+  $('dlg').classList.remove('hidden');
+  $('dlg').querySelectorAll('button').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if (k){
+      const nm = $('favName').value.trim();
+      favSave(p, k, k === 'fav' ? (nm || p.name) : (nm && nm !== p.name ? nm : t[k]));
+      toast(t.saved, 1500);
+    }
+    closeDlg(); render();
+  });
 }
-function applyVoice(){ $('voice').textContent = voiceOn ? '🔊' : '🔇'; store.set('voice', voiceOn); }
+function openExportDlg(){
+  const t = T();
+  const json = JSON.stringify(favAll().map(f => ({ kind: f.kind, name: f.name, addr: f.addr, lat: f.lat, lng: f.lng })), null, 2);
+  $('dlg').innerHTML = '<div class="dbox glass"><h3>favorites.json</h3><p>' + esc(t.exportHelp) + '</p><textarea id="expTa" readonly></textarea>' +
+    '<div class="drow"><button class="btn big green" id="expCopy">' + esc(t.copy) + '</button><button class="btn big" id="expClose">' + esc(t.close) + '</button></div></div>';
+  $('expTa').value = json;
+  $('dlg').classList.remove('hidden');
+  $('expClose').onclick = closeDlg;
+  $('expCopy').onclick = () => {
+    const done = () => toast(t.copied, 1500);
+    const legacy = () => { try { $('expTa').focus(); $('expTa').select(); document.execCommand('copy'); done(); } catch(e){} };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(done, legacy); else legacy();
+  };
+}
 
-/* ================= карта ================= */
-const map = L.map('map', { zoomControl:false, tap:true }).setView(store.get('last', [41.7151, 44.8271]), 13);
-const tileOpt = { maxZoom:20, subdomains:'abcd', attribution:'© OpenStreetMap © CARTO' };
-const tiles = {
-  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', tileOpt),
-  light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', tileOpt)
-};
-let theme = store.get('theme', 'dark');
+/* ================= карта Яндекса ================= */
+function init(){
+  const sp = store.get('last', [41.7151, 44.8271]);
+  map = new ymaps.Map('map', { center: sp, zoom: 13, controls: [], type: TYPES[mtype] },
+                      { suppressMapOpenBlock: true, yandexMapDisablePoiInteractivity: true });
+  const F = ymaps.templateLayoutFactory;
+  const CarLayout = F.createClass('<div class="car"><div class="carRot" id="carRot"><svg viewBox="0 0 40 40" width="54" height="54"><circle cx="20" cy="20" r="18" fill="rgba(34,195,166,.25)"/><path d="M20 6 L31 32 L20 26 L9 32 Z" fill="#22c3a6" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg></div></div>');
+  BubLayout = F.createClass('<div class="bub $[properties.c]">$[properties.t] <small>$[properties.s]</small></div>');
+  NumLayout = F.createClass('<div class="num">$[properties.n]</div>');
+  car = new ymaps.Placemark(sp, {}, { iconLayout: CarLayout, iconShape: { type:'Circle', coordinates:[0,0], radius:27 }, zIndex: 1000, visible: false });
+  destMark = new ymaps.Placemark(sp, {}, { iconLayout: F.createClass('<div class="pin"></div>'), iconShape: { type:'Circle', coordinates:[0,0], radius:15 }, zIndex: 900, visible: false });
+  lineCasing = new ymaps.Polyline([], {}, { strokeColor:'#0b6e5f', strokeWidth:13, strokeOpacity:.9, zIndex:10 });
+  lineMain   = new ymaps.Polyline([], {}, { strokeColor:'#22c3a6', strokeWidth:8, zIndex:11 });
+  linePast   = new ymaps.Polyline([], {}, { strokeColor:'#8a8f98', strokeWidth:8, strokeOpacity:.75, zIndex:11 });
+  map.geoObjects.add(lineCasing).add(lineMain).add(linePast).add(destMark).add(car);
+  trafficProv = new ymaps.traffic.provider.Actual({}, { infoLayerShown: true });
+
+  map.events.add(['mousedown', 'multitouchstart', 'wheel'], () => setFollow(false));
+  map.events.add('click', onMapClick);
+
+  applyLangUi(); applyTheme(); applyMapType(true); applyTraffic(); applyVoice();
+  loadShared(); startGeo(); render();
+  requestAnimationFrame(frame);
+  if (SIM) toast(T().demoHint, 4000);
+}
+
+function applyLangUi(){
+  document.documentElement.lang = lang;
+  $('lang').textContent = lang.toUpperCase();
+  $('spdU').textContent = T().kmh;
+}
 function applyTheme(){
-  Object.values(tiles).forEach(t => map.removeLayer(t));
-  tiles[theme].addTo(map);
   document.body.classList.toggle('light', theme === 'light');
+  document.body.classList.toggle('nightmap', theme === 'dark' && mtype === 0);
   $('theme').textContent = theme === 'dark' ? '☀' : '☾';
   store.set('theme', theme);
 }
-
-/* ================= позиция ================= */
-const carIcon = L.divIcon({ className:'car', iconSize:[46,46], iconAnchor:[23,23],
-  html:'<div><svg viewBox="0 0 40 40" width="46" height="46"><path d="M20 3 L34 35 L20 27 L6 35 Z" fill="#22c3a6" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></div>' });
-const pinIcon = L.divIcon({ className:'', html:'<div class="pin"></div>', iconSize:[30,30], iconAnchor:[15,36] });
-
-let car = null, accCircle = null, pos = null, lastPos = null, heading = 0, follow = true, firstFix = true;
-
+function applyMapType(silent){
+  map.setType(TYPES[mtype]);
+  $('layers').textContent = mtype === 0 ? '🗺' : '🛰';
+  applyTheme(); store.set('mtype', mtype);
+  if (!silent) toast([T().map, T().hybrid, T().sat][mtype], 1200);
+}
+function applyTraffic(){
+  trafficProv.setMap(trafficOn ? map : null);
+  $('traffic').classList.toggle('on', trafficOn);
+  store.set('traffic', trafficOn);
+}
+function applyVoice(){ $('voice').textContent = voiceOn ? '🔊' : '🔇'; store.set('voice', voiceOn); }
 function setFollow(v){ follow = v; $('center').classList.toggle('on', v); }
 
+/* ================= позиция ================= */
 function onPosition(lat, lng, acc, spd, hdg){
   const p = [lat, lng];
   if (hdg != null && !isNaN(hdg) && (spd == null || spd > 1)) heading = hdg;
   else if (lastPos && hav(lastPos, p) > 4) heading = bearing(lastPos, p);
   if (!lastPos || hav(lastPos, p) > 4) lastPos = p;
-  pos = p;
+  pos = p; speed = (spd != null && !isNaN(spd)) ? spd : speed;
 
-  if (!car){
-    accCircle = L.circle(p, { radius:acc||0, color:'#22c3a6', weight:1, fillOpacity:.1, interactive:false }).addTo(map);
-    car = L.marker(p, { icon:carIcon, zIndexOffset:1000, interactive:false }).addTo(map);
-  } else {
-    car.setLatLng(p); accCircle.setLatLng(p).setRadius(acc||0);
-  }
-  const el = car.getElement();
-  if (el && el.firstChild) el.firstChild.style.transform = 'rotate(' + heading + 'deg)';
-  if (spd != null && !isNaN(spd)) $('spd').textContent = Math.round(spd*3.6);
+  if (!shown){ shown = p; shownHeading = heading; car.geometry.setCoordinates(p); car.options.set('visible', true); }
+  animFrom = shown; target = p; animStart = performance.now();
+  $('spd').textContent = Math.round(speed * 3.6);
   store.set('last', p);
 
-  if (firstFix){ firstFix = false; if (!route) map.setView(p, 16); }
+  if (firstFix){ firstFix = false; if (state === 'idle') map.setCenter(p, 16); }
   if (state === 'nav'){
     updateNav(p);
-    if (follow) map.setView(p, Math.max(map.getZoom(), 17), { animate:true });
-  } else if (follow && !route) map.panTo(p);
+    if (follow && state === 'nav'){
+      const k = speed * 3.6, z = Math.max(10, Math.min(19, (k < 40 ? 17 : k < 80 ? 16 : 15) + zoomAdj));
+      if (map.getZoom() !== z) map.setZoom(z, { duration: 400 });
+      map.panTo(p, { duration: 950, flying: false });
+    }
+  } else if (follow && state === 'idle'){
+    map.panTo(p, { duration: 800, flying: false });
+  }
 }
-
-let simRunning = false;
+function frame(now){
+  if (target && animFrom){
+    const t = Math.min(1, (now - animStart) / 950);
+    shown = [animFrom[0] + (target[0]-animFrom[0])*t, animFrom[1] + (target[1]-animFrom[1])*t];
+    car.geometry.setCoordinates(shown);
+    if (t >= 1) animFrom = null;
+  }
+  shownHeading = (shownHeading + angDiff(shownHeading, heading) * 0.15 + 360) % 360;
+  const el = document.getElementById('carRot');
+  if (el) el.style.transform = 'rotate(' + shownHeading + 'deg)';
+  requestAnimationFrame(frame);
+}
 function startGeo(){
-  if (!('geolocation' in navigator)){ toast('Геолокация не поддерживается этим браузером', 5000); return; }
+  if (!('geolocation' in navigator)){ toast(T().gpsNone, 5000); return; }
   navigator.geolocation.watchPosition(
     g => { if (simRunning) return; const c = g.coords; onPosition(c.latitude, c.longitude, c.accuracy, c.speed, c.heading); },
-    e => toast(e.code === 1 ? 'Доступ к геолокации запрещён — разрешите его в настройках браузера' : 'Нет сигнала GPS', 5000),
+    e => toast(e.code === 1 ? T().gpsDenied : T().noGps, 5000),
     { enableHighAccuracy:true, maximumAge:1000, timeout:20000 }
   );
 }
 
 /* ================= поиск ================= */
-function renderList(items, header){
-  const box = $('results'); box.innerHTML = header ? '<div class="hdr">' + esc(header) + '</div>' : '';
-  items.forEach(it => {
-    const d = document.createElement('div'); d.className = 'item';
-    const dist = pos ? '<span class="dist">' + fmtDist(hav(pos, [it.lat, it.lng])) + '</span>' : '';
-    d.innerHTML = '<div class="nm"><span>' + esc(it.name) + '</span>' + dist + '</div><div class="ad">' + esc(it.addr || '') + '</div>';
-    d.onclick = () => { hideResults(); $('q').blur(); setDest(it); };
-    box.appendChild(d);
+function placeRow(it, opts){
+  opts = opts || {};
+  const d = document.createElement('div'); d.className = 'item';
+  const dist = (pos && it.lat != null) ? '<span class="dist">' + fmtDist(hav(pos, [it.lat, it.lng])) + '</span>' : '';
+  d.innerHTML = '<div class="mid"><div class="nm"><span>' + (opts.star ? '<span class="star">★</span> ' : '') + esc(it.name) + '</span>' + dist + '</div><div class="ad">' + esc(it.addr || '') + '</div></div>' +
+    (opts.del ? '<div class="del">✕</div>' : '');
+  d.onclick = e => {
+    if (opts.del && e.target.classList.contains('del')){ favRemove(it); showHome(); return; }
+    (opts.onPick || choose)(it);
+  };
+  return d;
+}
+function showHome(){
+  const t = T(), box = $('results'); box.innerHTML = '';
+  const chips = document.createElement('div'); chips.className = 'chips';
+  [['home', '⌂'], ['work', '💼']].forEach(([k, ic]) => {
+    const f = favKind(k), c = document.createElement('div');
+    c.className = 'chip' + (f ? '' : ' off');
+    c.innerHTML = '<div class="ic">' + ic + '</div><div style="min-width:0">' + esc(t[k]) + '<small>' + (f ? esc(pos ? fmtDist(hav(pos, [f.lat, f.lng])) : f.addr) : '+') + '</small></div>';
+    c.onclick = () => f ? choose(f) : toast(t.setHint(t[k]), 4000);
+    chips.appendChild(c);
   });
+  box.appendChild(chips);
+  const favs = favAll().filter(f => f.kind === 'fav' || favEdit);
+  if (favs.length){
+    const h = document.createElement('div'); h.className = 'hdr';
+    h.innerHTML = '<span>' + esc(t.favs) + '</span><a>' + esc(favEdit ? t.done : t.edit) + '</a>';
+    h.querySelector('a').onclick = () => { favEdit = !favEdit; showHome(); };
+    box.appendChild(h);
+    favs.forEach(f => box.appendChild(placeRow(f, { star: true, del: favEdit })));
+    if (favEdit){
+      const ex = document.createElement('div'); ex.className = 'add'; ex.textContent = '⇪ ' + t.exportFav;
+      ex.onclick = openExportDlg; box.appendChild(ex);
+    }
+  }
+  const rec = store.get('recent', []).filter(r => !favFind(r));
+  if (rec.length && !favEdit){
+    const h = document.createElement('div'); h.className = 'hdr'; h.innerHTML = '<span>' + esc(t.recent) + '</span>';
+    box.appendChild(h);
+    rec.forEach(r => box.appendChild(placeRow(r)));
+  }
   box.classList.remove('hidden');
 }
 function showMsg(m){ const box = $('results'); box.innerHTML = '<div class="msg">' + esc(m) + '</div>'; box.classList.remove('hidden'); }
-function hideResults(){ $('results').classList.add('hidden'); }
-function showRecent(){ const r = store.get('recent', []); if (r.length) renderList(r, 'Недавние'); else hideResults(); }
+function hideResults(){ $('results').classList.add('hidden'); favEdit = false; }
 
-async function search(){
+let sugT = null, sugSeq = 0, lastSug = [];
+function suggest(v){
+  const my = ++sugSeq;
+  ymaps.suggest(v, { boundedBy: map.getBounds(), results: 7 }).then(items => {
+    if (my !== sugSeq) return;
+    lastSug = items.map(i => { const parts = String(i.displayName).split(', '); return { name: parts[0], addr: parts.slice(1).join(', '), value: i.value }; });
+    if (!lastSug.length){ showMsg(T().nothing); return; }
+    const box = $('results'); box.innerHTML = '';
+    lastSug.forEach(s => box.appendChild(placeRow(s, { onPick: geocodePick })));
+    box.classList.remove('hidden');
+  }, () => { if (my === sugSeq) showMsg(T().searchErr); });
+}
+function geocodePick(it){
+  showMsg(T().searching);
+  ymaps.geocode(it.value, { results: 1, boundedBy: map.getBounds() }).then(res => {
+    const g = res.geoObjects.get(0);
+    if (!g){ showMsg(T().nothing); return; }
+    const c = g.geometry.getCoordinates();
+    choose({ name: it.name, addr: it.addr || g.getAddressLine(), lat: c[0], lng: c[1] });
+  }, () => showMsg(T().searchErr));
+}
+function searchEnter(){
   const q = $('q').value.trim(); if (!q) return;
   const cm = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
-  if (cm){ hideResults(); $('q').blur(); setDest({ name:'Координаты', addr:cm[1]+', '+cm[2], lat:+cm[1], lng:+cm[2] }); return; }
-  const c = pos || [map.getCenter().lat, map.getCenter().lng];
-  const vb = [c[1]-1.5, c[0]+1.5, c[1]+1.5, c[0]-1.5].join(',');
-  showMsg('Ищу…');
-  try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&accept-language=ru&viewbox=' + vb + '&q=' + encodeURIComponent(q));
-    const data = await r.json();
-    if (!data.length){ showMsg('Ничего не найдено'); return; }
-    renderList(data.map(d => ({ name: d.name || d.display_name.split(',')[0], addr: d.display_name, lat: +d.lat, lng: +d.lon })));
-  } catch(e){ showMsg('Ошибка поиска — проверьте интернет'); }
+  if (cm){ choose({ name: T().coords, addr: cm[1] + ', ' + cm[2], lat: +cm[1], lng: +cm[2] }); return; }
+  if (lastSug.length) geocodePick(lastSug[0]); else geocodePick({ name: q, value: q });
 }
-
-function addRecent(it){
-  let r = store.get('recent', []);
-  r = r.filter(x => Math.abs(x.lat-it.lat) > 1e-5 || Math.abs(x.lng-it.lng) > 1e-5);
-  r.unshift({ name:it.name, addr:it.addr, lat:it.lat, lng:it.lng });
-  store.set('recent', r.slice(0, 10));
+function choose(it){
+  hideResults(); $('q').blur(); $('q').value = ''; lastSug = [];
+  const p = { name: it.name, addr: it.addr || '', lat: +it.lat, lng: +it.lng };
+  addRecent(p);
+  if (adding && stops.length){ adding = false; stops.splice(stops.length - 1, 0, p); toast(T().stopAdded, 1500); }
+  else { adding = false; pick = null; stops = [p]; }
+  planRoute();
 }
-
-/* ================= маршрут ================= */
-let dest = null, destMarker = null, route = null, routeLayers = [], state = 'idle';
-
-async function setDest(it){
-  if (state === 'nav') stopNav();
-  dest = it; addRecent(it);
-  if (destMarker) map.removeLayer(destMarker);
-  destMarker = L.marker([it.lat, it.lng], { icon:pinIcon }).addTo(map);
-  $('dName').textContent = it.name; $('dStats').textContent = 'Строю маршрут…';
-  $('bottom').classList.remove('hidden'); $('steps').classList.add('hidden'); $('go').classList.add('hidden'); $('demo').classList.add('hidden');
-  if (await buildRoute()){
-    state = 'preview';
-    $('dStats').textContent = fmtDist(route.total) + ' · ' + fmtTime(route.duration) + ' · прибытие ' + clock(route.duration);
-    $('go').classList.remove('hidden'); if (SIM) $('demo').classList.remove('hidden');
-    setFollow(false);
-    renderSteps(); $('steps').classList.remove('hidden');
-    const wide = innerWidth > 900;
-    map.fitBounds(routeLayers[1].getBounds(), { paddingTopLeft:[wide ? 490 : 40, 60], paddingBottomRight:[110, 60] });
-  }
-}
-
-async function buildRoute(){
-  const from = pos || [map.getCenter().lat, map.getCenter().lng];
-  if (!pos) toast('Нет GPS — маршрут от центра карты');
-  const url = 'https://router.project-osrm.org/route/v1/driving/' + from[1] + ',' + from[0] + ';' + dest.lng + ',' + dest.lat +
-              '?overview=full&geometries=geojson&steps=true';
-  try {
-    const r = await fetch(url); const j = await r.json();
-    if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error(j.message || j.code);
-    setRoute(j.routes[0]); return true;
-  } catch(e){
-    $('dStats').textContent = 'Не удалось построить маршрут';
-    toast('Ошибка маршрута: ' + e.message, 5000); return false;
-  }
-}
-
-function setRoute(r){
-  const coords = r.geometry.coordinates.map(c => [c[1], c[0]]);
-  const cum = [0];
-  for (let i = 1; i < coords.length; i++) cum.push(cum[i-1] + hav(coords[i-1], coords[i]));
-  const steps = r.legs[0].steps;
-  let k = 0;
-  steps.forEach(s => {               // привязываем каждый манёвр к точке линии маршрута
-    const ml = [s.maneuver.location[1], s.maneuver.location[0]];
-    let best = k, bd = Infinity;
-    for (let i = k; i < coords.length; i++){ const d = hav(coords[i], ml); if (d < bd){ bd = d; best = i; } if (d < 1) break; }
-    s.at = cum[best]; k = best;
+function reverse(it){
+  return new Promise(res => {
+    try {
+      ymaps.geocode([it.lat, it.lng], { results: 1 }).then(r => {
+        const g = r.geoObjects.get(0);
+        if (g){ it.name = g.properties.get('name') || it.name; it.addr = g.getAddressLine() || it.addr; }
+        res(it);
+      }, () => res(it));
+    } catch(e){ res(it); }
   });
-  route = { coords, cum, steps, total: cum[cum.length-1] || 1, duration: r.duration, seg: 0, said: {} };
-  routeLayers.forEach(l => map.removeLayer(l));
-  routeLayers = [
-    L.polyline(coords, { color:'#0b6e5f', weight:13, opacity:.85, interactive:false }).addTo(map),
-    L.polyline(coords, { color:'#22c3a6', weight:8, interactive:false }).addTo(map)
-  ];
+}
+function onMapClick(e){
+  if (state === 'nav') return;
+  const c = e.get('coords');
+  const it = { name: T().point, addr: c[0].toFixed(5) + ', ' + c[1].toFixed(5), lat: c[0], lng: c[1] };
+  if (adding){ reverse(it).then(choose); return; }
+  if (state !== 'idle' && state !== 'pick') return;
+  hideResults(); $('q').blur();
+  pick = it; state = 'pick';
+  destMark.geometry.setCoordinates(c); destMark.options.set('visible', true);
+  render();
+  reverse(it).then(() => { if (pick === it) render(); });
 }
 
+/* ================= получение маршрутов ================= */
+const arr = x => Array.isArray(x) ? x : (x && x.toArray ? x.toArray() : (x && x.getLength ? Array.from({ length: x.getLength() }, (_, i) => x.get(i)) : []));
+const pval = (o, k) => { const v = o && o.properties && o.properties.get(k); return (v && typeof v === 'object' && 'value' in v) ? v.value : v; };
+function normY(a){
+  if (a && typeof a === 'object') a = a.value;
+  a = String(a || '').toLowerCase().trim();
+  if (!a || a === 'none' || a === 'straight') return '';
+  if (a.includes('u-turn') || a.includes('uturn')) return 'uturn';
+  if (a.includes('leave') && a.includes('roundabout')) return 'exit-roundabout';
+  if (a.includes('roundabout')) return 'roundabout';
+  if (a.includes('merge')) return 'merge';
+  const side = a.includes('left') ? 'left' : a.includes('right') ? 'right' : '';
+  if (!side) return '';
+  if (a.includes('exit')) return 'exit-' + side;
+  if (a.includes('hard') || a.includes('sharp')) return 'sharp-' + side;
+  if (a.includes('slight') || a.includes('keep')) return 'slight-' + side;
+  return side;
+}
+function mkRoute(coords, marks, duration, free, streets, origin){
+  if (coords.length < 2) throw new Error('empty');
+  if (origin && hav(coords[0], origin) > 50000 && hav([coords[0][1], coords[0][0]], origin) < 50000){
+    coords = coords.map(c => [c[1], c[0]]);   // на случай другого порядка координат
+  }
+  const cum = cumDist(coords);
+  const steps = marks.map(m => ({ at: cum[Math.min(m.idx, cum.length - 1)], act: m.act, street: m.street || '', exit: m.exit, n: m.n }));
+  let via = '', best = 0;
+  Object.keys(streets || {}).forEach(s => { if (s && streets[s] > best){ best = streets[s]; via = s; } });
+  return { coords, cum, steps, total: cum[cum.length - 1] || 1, duration: duration || 0, free: free || duration || 0, via, seg: 0, said: {} };
+}
+function segCoords(sg){
+  if (sg.geometry && sg.geometry.getCoordinates) return sg.geometry.getCoordinates();
+  if (sg.getCoordinates) return sg.getCoordinates();
+  const c = sg.properties && sg.properties.get && sg.properties.get('coordinates');
+  return c || [];
+}
+function parseMulti(r, origin){
+  const coords = [], marks = [], streets = {};
+  const paths = arr(r.getPaths());
+  paths.forEach((path, pi) => {
+    const segs = arr(path.getSegments ? path.getSegments() : []);
+    let any = false;
+    segs.forEach((sg, si) => {
+      const sc = segCoords(sg); if (!sc || !sc.length) return;
+      any = true;
+      const startIdx = coords.length ? coords.length - 1 : 0;
+      sc.forEach((c, k) => { if (coords.length && k === 0) return; coords.push(c); });
+      const street = (sg.properties && sg.properties.get('street')) || '';
+      if (street) streets[street] = (streets[street] || 0) + (pval(sg, 'distance') || 0);
+      if (si > 0){ const act = normY(sg.properties && sg.properties.get('action')); if (act) marks.push({ idx: startIdx, act, street }); }
+    });
+    if (!any){
+      const pc = (path.properties && path.properties.get('coordinates')) || (path.geometry && path.geometry.getCoordinates && path.geometry.getCoordinates()) || [];
+      pc.forEach((c, k) => { if (coords.length && k === 0) return; coords.push(c); });
+    }
+    marks.push({ idx: coords.length - 1, act: pi < paths.length - 1 ? 'stop' : 'arrive', n: pi });
+  });
+  const free = pval(r, 'duration') || 0;
+  return mkRoute(coords, marks, pval(r, 'durationInTraffic') || free, free, streets, origin);
+}
+function routeMulti(points){
+  return new Promise((resolve, reject) => {
+    let done = false, model;
+    const fin = (ok, v) => { if (done) return; done = true; clearTimeout(timer); (ok ? resolve : reject)(v); };
+    const timer = setTimeout(() => fin(false, new Error('timeout')), 12000);
+    try { model = new ymaps.multiRouter.MultiRouteModel(points, { results: 3, avoidTrafficJams: true, routingMode: 'auto' }); }
+    catch(e){ fin(false, e); return; }
+    model.events.add('requestsuccess', () => {
+      try {
+        const list = arr(model.getRoutes()).map(r => { try { return parseMulti(r, points[0]); } catch(e){ return null; } }).filter(Boolean);
+        if (!list.length) throw new Error('empty');
+        fin(true, list);
+      } catch(e){ fin(false, e); }
+    });
+    model.events.add('requestfail', () => fin(false, new Error('requestfail')));
+  });
+}
+function routeOld(points){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), 12000);
+    ymaps.route(points, { avoidTrafficJams: true, mapStateAutoApply: false }).then(r => {
+      clearTimeout(timer);
+      try {
+        const coords = [], marks = [], streets = {};
+        const paths = r.getPaths(), n = paths.getLength();
+        for (let i = 0; i < n; i++){
+          const segs = paths.get(i).getSegments();
+          segs.forEach((sg, si) => {
+            const sc = sg.getCoordinates(), startIdx = coords.length ? coords.length - 1 : 0;
+            sc.forEach((c, k) => { if (coords.length && k === 0) return; coords.push(c); });
+            const street = sg.getStreet() || '';
+            if (street) streets[street] = (streets[street] || 0) + (sg.getLength() || 0);
+            if (si > 0){ const act = normY(sg.getAction()); if (act) marks.push({ idx: startIdx, act, street }); }
+          });
+          marks.push({ idx: coords.length - 1, act: i < n - 1 ? 'stop' : 'arrive', n: i });
+        }
+        resolve(mkRoute(coords, marks, (r.getJamsTime && r.getJamsTime()) || r.getTime(), r.getTime(), streets, points[0]));
+      } catch(err){ reject(err); }
+    }, err => { clearTimeout(timer); reject(err); });
+  });
+}
+function normO(m){
+  const t = m.type, mod = m.modifier || '', side = mod.includes('left') ? 'left' : mod.includes('right') ? 'right' : '';
+  if (t === 'depart') return '';
+  if (t === 'roundabout' || t === 'rotary') return 'roundabout';
+  if (t === 'exit roundabout' || t === 'exit rotary') return 'exit-roundabout';
+  if (t === 'fork') return side ? 'keep-' + side : '';
+  if (t === 'merge') return 'merge';
+  if (t === 'on ramp' || t === 'off ramp') return side ? 'exit-' + side : '';
+  if (mod === 'uturn') return 'uturn';
+  if (!side) return '';
+  if (mod.startsWith('sharp')) return 'sharp-' + side;
+  if (mod.startsWith('slight')) return 'slight-' + side;
+  return side;
+}
+async function routeOSRM(points){
+  const url = 'https://router.project-osrm.org/route/v1/driving/' + points.map(p => p[1] + ',' + p[0]).join(';') +
+              '?overview=full&geometries=geojson&steps=true' + (points.length === 2 ? '&alternatives=true' : '');
+  const j = await (await fetch(url)).json();
+  if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error(j.code);
+  return j.routes.map(r => {
+    const coords = r.geometry.coordinates.map(c => [c[1], c[0]]), marks = [], streets = {};
+    let k = 0;
+    r.legs.forEach((leg, li) => leg.steps.forEach(s => {
+      const m = s.maneuver, ml = [m.location[1], m.location[0]];
+      let best = k, bd = Infinity;
+      for (let i = k; i < coords.length; i++){ const d = hav(coords[i], ml); if (d < bd){ bd = d; best = i; } if (d < 1) break; }
+      k = best;
+      if (s.name) streets[s.name] = (streets[s.name] || 0) + s.distance;
+      const act = m.type === 'arrive' ? (li < r.legs.length - 1 ? 'stop' : 'arrive') : normO(m);
+      if (act) marks.push({ idx: best, act, street: s.name || '', exit: m.exit, n: li });
+    }));
+    return mkRoute(coords, marks, r.duration, r.duration, streets, null);
+  });
+}
+async function fetchRoutes(yandexOnly){
+  const from = pos || map.getCenter();
+  const pts = [from].concat(stops.map(s => [s.lat, s.lng]));
+  let list, src = 'yandex';
+  try { list = await routeMulti(pts); }
+  catch(e){
+    try { list = [await routeOld(pts)]; }
+    catch(e1){
+      if (yandexOnly) return null;
+      try { list = await routeOSRM(pts); src = 'osrm'; } catch(e2){ return null; }
+    }
+  }
+  const names = stops.map(s => s.name);
+  list.forEach(r => r.steps.forEach(s => { if (s.act === 'stop') s.name = names[s.n] || ''; }));
+  return { list, src };
+}
+
+/* ================= планирование и отрисовка ================= */
+function clearObjs(a){ a.forEach(o => { try { map.geoObjects.remove(o); } catch(e){} }); a.length = 0; }
+function clearRoute(){
+  alts = []; route = null; routeSrc = '';
+  [lineCasing, lineMain, linePast].forEach(l => l.geometry.setCoordinates([]));
+  clearObjs(altObjs); clearObjs(stopObjs);
+  destMark.options.set('visible', false);
+}
+function drawStops(){
+  clearObjs(stopObjs);
+  stops.forEach((s, i) => {
+    if (i === stops.length - 1){ destMark.geometry.setCoordinates([s.lat, s.lng]); destMark.options.set('visible', true); return; }
+    const pm = new ymaps.Placemark([s.lat, s.lng], { n: i + 1 }, { iconLayout: NumLayout, iconShape: { type:'Circle', coordinates:[0,0], radius:17 }, zIndex: 800 });
+    map.geoObjects.add(pm); stopObjs.push(pm);
+  });
+}
+function pointAt(r, f){
+  const d = r.total * f; let i = 0;
+  while (i < r.cum.length - 1 && r.cum[i] < d) i++;
+  return r.coords[i];
+}
+function drawRoutes(){
+  clearObjs(altObjs);
+  if (!route) return;
+  lineCasing.geometry.setCoordinates(route.coords); lineMain.geometry.setCoordinates(route.coords); linePast.geometry.setCoordinates([]);
+  if (state !== 'preview') return;
+  const t = T(), fr = [0.5, 0.3, 0.7];
+  alts.forEach((a, i) => {
+    const pickIt = () => selectRoute(i);
+    if (i !== sel){
+      const o = new ymaps.Polyline(a.coords, {}, { strokeColor:'#10151a', strokeWidth:12, strokeOpacity:.55, zIndex:5 });
+      const g = new ymaps.Polyline(a.coords, {}, { strokeColor:'#b8c2cc', strokeWidth:7, strokeOpacity:.95, zIndex:6 });
+      o.events.add('click', pickIt); g.events.add('click', pickIt);
+      map.geoObjects.add(o).add(g); altObjs.push(o, g);
+    }
+    if (alts.length > 1){
+      const diff = Math.round((a.duration - route.duration) / 60);
+      const props = i === sel ? { c:'s', t: fmtTime(a.duration), s: t.eta + ' ' + clock(a.duration) }
+                              : { c:'a', t: fmtTime(a.duration), s: (diff >= 0 ? '+' : '−') + Math.abs(diff) };
+      const b = new ymaps.Placemark(pointAt(a, fr[i % 3]), props, { iconLayout: BubLayout, iconShape: { type:'Rectangle', coordinates:[[-70,-20],[70,20]] }, zIndex: i === sel ? 700 : 600 });
+      b.events.add('click', pickIt);
+      map.geoObjects.add(b); altObjs.push(b);
+    }
+  });
+}
+function selectRoute(i){
+  if (state !== 'preview' || !alts[i]) return;
+  sel = i; route = alts[i]; drawRoutes(); render();
+}
+function fitRoute(){
+  let a = [90, 180], b = [-90, -180];
+  alts.forEach(r => r.coords.forEach(c => { a = [Math.min(a[0], c[0]), Math.min(a[1], c[1])]; b = [Math.max(b[0], c[0]), Math.max(b[1], c[1])]; }));
+  const wide = innerWidth > 900;
+  map.setBounds([a, b], { checkZoomRange: true, zoomMargin: [70, 110, 70, wide ? 500 : 50], duration: 600 });
+}
+async function planRoute(){
+  const my = ++planSeq;
+  if (!stops.length){ cancelAll(); return; }
+  stopSim();
+  [lineCasing, lineMain, linePast].forEach(l => l.geometry.setCoordinates([]));
+  clearObjs(altObjs); alts = []; route = null; stepsOpen = false;
+  state = 'routing'; pick = null; drawStops(); render();
+  if (!pos) toast(T().fromCenter);
+  const res = await fetchRoutes(false);
+  if (my !== planSeq) return;
+  if (!res){ $('dStats').textContent = T().noRoute; toast(T().noRoute, 4000); return; }
+  alts = res.list; routeSrc = res.src;
+  sel = 0; alts.forEach((a, i) => { if (a.duration < alts[sel].duration - 1) sel = i; });
+  route = alts[sel]; state = 'preview';
+  setFollow(false); drawRoutes(); fitRoute(); render();
+}
+function cancelAll(){
+  planSeq++; stopSim(); clearInterval(refreshTimer);
+  state = 'idle'; stops = []; pick = null; adding = false; stepsOpen = false; zoomAdj = 0;
+  clearRoute(); releaseWake(); setFollow(true); render();
+  if (pos) map.setCenter(pos, 16, { duration: 500 });
+}
+
+/* ================= интерфейс ================= */
+function renderStops(){
+  const t = T(), box = $('stopsBox'); box.innerHTML = '';
+  const row = (dot, text, i) => {
+    const d = document.createElement('div'); d.className = 'stop';
+    d.innerHTML = dot + '<div class="t">' + esc(text) + '</div>' + (i > 0 ? '<div class="x" data-a="up">↑</div>' : '') + (i >= 0 ? '<div class="x" data-a="del">✕</div>' : '');
+    d.onclick = e => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'del'){ stops.splice(i, 1); planRoute(); }
+      if (a === 'up'){ const x = stops[i]; stops[i] = stops[i-1]; stops[i-1] = x; planRoute(); }
+    };
+    box.appendChild(d);
+  };
+  row('<div class="dot" style="background:#3b82f6;color:#fff">●</div>', t.myLoc, -1);
+  stops.forEach((s, i) => {
+    const last = i === stops.length - 1;
+    row(last ? '<div class="dot" style="background:#22c3a6;color:#04201b">⚑</div>'
+             : '<div class="dot" style="background:#fff;color:#0b6e5f;border:3px solid #22c3a6">' + (i + 1) + '</div>', s.name, i);
+  });
+  if (stops.length < 5){
+    const a = document.createElement('div'); a.className = 'add'; a.textContent = '＋ ' + t.addStop;
+    a.onclick = () => { adding = true; render(); $('q').focus(); showHome(); };
+    box.appendChild(a);
+  }
+}
+function renderRoutes(){
+  const t = T(), box = $('routesBox'); box.innerHTML = '';
+  const min = Math.min.apply(null, alts.map(a => a.duration));
+  alts.forEach((a, i) => {
+    const d = document.createElement('div'); d.className = 'rt' + (i === sel ? ' sel' : '');
+    const delay = Math.round((a.duration - a.free) / 60);
+    const line2 = (a.via ? esc(t.via + ' ' + a.via) : '') +
+      (routeSrc === 'osrm' ? (a.via ? ' · ' : '') + esc(t.noTraffic) : delay >= 2 ? (a.via ? ' · ' : '') + '<span class="jam">+' + delay + ' ' + esc(t.min) + ' ' + esc(t.jam) + '</span>' : '');
+    d.innerHTML = '<div class="tm">' + esc(fmtTime(a.duration)) + '</div><div class="in"><div><b>' + esc(t.eta) + ' ' + clock(a.duration) + '</b> · ' + esc(fmtDist(a.total)) + '</div><div>' + line2 + '</div></div>' +
+      (alts.length > 1 && a.duration === min ? '<span class="tag">' + esc(t.fastest) + '</span>' : '');
+    d.onclick = () => selectRoute(i);
+    box.appendChild(d);
+  });
+}
 function renderSteps(){
   const box = $('steps'); box.innerHTML = '';
   let prev = 0;
-  route.steps.forEach((s, i) => {
-    if (i === 0) return;
+  route.steps.forEach(s => {
     const row = document.createElement('div'); row.className = 'st';
-    row.innerHTML = '<div class="a">' + arrowOf(s) + '</div><div class="t">' + esc(textOf(s)) + '</div><div class="d">' + fmtDist(s.at - prev) + '</div>';
+    row.innerHTML = '<div class="a">' + (ARR[s.act] || '↑') + '</div><div class="t">' + esc(stepText(s)) + '</div><div class="d">' + fmtDist(s.at - prev) + '</div>';
     prev = s.at; box.appendChild(row);
   });
 }
+function render(){
+  const t = T(), nav = state === 'nav', prev = state === 'preview', pk = state === 'pick', rt = state === 'routing';
+  show('top', state === 'idle' || pk || adding);
+  show('qCancel', adding);
+  $('q').placeholder = adding ? t.addStopPh : t.where;
+  show('banner', nav);
+  show('card', pk || (!adding && (rt || prev || nav)));
+  $('card').classList.toggle('attop', prev || rt);
+  show('stopsBox', prev || rt); show('routesBox', prev);
+  show('info', pk || rt || nav); show('nextLine', nav && stops.length > 1);
+  show('steps', prev && stepsOpen);
+  show('go', pk || prev); show('list', prev); show('star', pk || prev); show('skip', nav && stops.length > 1);
+  show('demo', SIM && prev); show('speed', nav);
+  $('go').textContent = pk ? t.routeHere : t.go;
+  $('list').classList.toggle('green', stepsOpen);
+  const target = pk ? pick : stops[stops.length - 1];
+  $('star').textContent = favFind(target) ? '★' : '☆';
+  if (pk){ $('dName').textContent = pick.name; $('dStats').textContent = pick.addr; }
+  if (rt){ $('dName').textContent = stops.length ? stops[stops.length - 1].name : ''; $('dStats').textContent = t.building; }
+  if (prev || rt) renderStops();
+  if (prev){ renderRoutes(); if (stepsOpen) renderSteps(); }
+}
 
 /* ================= навигация ================= */
-let offCount = 0, lastReroute = 0, rerouting = false;
-
 function startNav(){
   if (!route) return;
-  state = 'nav'; setFollow(true); route.seg = 0; route.said = {};
-  $('banner').classList.remove('hidden'); $('speed').classList.remove('hidden');
-  $('top').classList.add('hidden'); $('steps').classList.add('hidden'); $('go').classList.add('hidden'); $('demo').classList.add('hidden');
-  requestWake(); speak('Поехали');
-  if (pos){ updateNav(pos); map.setView(pos, 17); }
+  state = 'nav'; alts = [route]; sel = 0; adding = false; stepsOpen = false; zoomAdj = 0;
+  route.seg = 0; route.said = {};
+  setFollow(true); drawRoutes(); render();
+  if (pos) map.setCenter(pos, 17, { duration: 500 });
+  requestWake(); say(l => L[l].letsGo);
+  clearInterval(refreshTimer); refreshTimer = setInterval(refreshRoute, 180000);
+  if (pos) updateNav(pos);
 }
-
-function stopNav(){
-  stopSim();
-  state = 'idle'; route = null; dest = null;
-  routeLayers.forEach(l => map.removeLayer(l)); routeLayers = [];
-  if (destMarker){ map.removeLayer(destMarker); destMarker = null; }
-  ['banner', 'bottom', 'speed'].forEach(i => $(i).classList.add('hidden'));
-  $('top').classList.remove('hidden');
-  releaseWake(); setFollow(true); if (pos) map.setView(pos, 16);
-}
-
 function updateNav(p){
-  const rt = route; if (!rt) return;
-  const c = rt.coords;
+  const rt = route; if (!rt || state !== 'nav') return;
+  const t = T(), c = rt.coords;
   let bestD = Infinity, bestI = rt.seg, bestT = 0;
   const from = Math.max(0, rt.seg - 3), to = Math.min(c.length - 1, rt.seg + 300);
   for (let i = from; i < to; i++){ const r = segProj(p, c[i], c[i+1]); if (r.d < bestD){ bestD = r.d; bestI = i; bestT = r.t; } }
@@ -390,53 +940,96 @@ function updateNav(p){
   const segLen = (rt.cum[bestI+1] ?? rt.cum[bestI]) - rt.cum[bestI];
   const progress = rt.cum[bestI] + bestT * segLen;
 
-  // съехали с маршрута → перестраиваем
   if (bestD > 50){
     offCount++;
     if (offCount >= 3 && !rerouting && Date.now() - lastReroute > 10000) reroute();
-  } else { offCount = 0; rt.seg = bestI; }
+  } else {
+    offCount = 0; rt.seg = bestI;
+    const nx = c[bestI+1] || c[bestI];
+    const pp = [c[bestI][0] + (nx[0]-c[bestI][0])*bestT, c[bestI][1] + (nx[1]-c[bestI][1])*bestT];
+    const rem = [pp].concat(c.slice(bestI+1)), past = c.slice(0, bestI+1).concat([pp]);
+    lineCasing.geometry.setCoordinates(rem); lineMain.geometry.setCoordinates(rem); linePast.geometry.setCoordinates(past.length > 1 ? past : []);
+  }
 
   const remain = Math.max(0, rt.total - progress);
+  // промежуточная остановка
+  const st = rt.steps.find(s => s.act === 'stop' && !s.done);
+  if (st && stops.length > 1 && ((st.at - progress < 30 && bestD < 60) || hav(p, [stops[0].lat, stops[0].lng]) < 35)){
+    st.done = true; const name = stops[0].name;
+    stops.shift(); drawStops(); render();
+    say(l => L[l].sayStop); toast(t.stopDone(name), 4000);
+  }
   if (remain < 30 && bestD < 60){ arrive(); return; }
 
-  let j = rt.steps.findIndex(s => s.at > progress + 5);
+  let j = rt.steps.findIndex(s => !s.done && s.at > progress + 5);
   if (j < 0) j = rt.steps.length - 1;
   const s = rt.steps[j], d = Math.max(0, s.at - progress);
-  $('bArrow').textContent = arrowOf(s);
+  $('bArrow').textContent = ARR[s.act] || '↑';
   $('bDist').textContent = fmtDist(d);
-  $('bText').textContent = textOf(s);
-  const tl = rt.duration * remain / rt.total;
-  $('dName').textContent = dest.name;
-  $('dStats').textContent = fmtDist(remain) + ' · ' + fmtTime(tl) + ' · прибытие ' + clock(tl);
+  $('bText').textContent = stepText(s);
+
+  const tl = rt.duration * remain / rt.total; lastTl = tl;
+  const nst = rt.steps.find(x => x.act === 'stop' && !x.done);
+  if (nst && stops.length > 1){
+    const dS = Math.max(0, nst.at - progress), tS = rt.duration * dS / rt.total, fin = stops[stops.length - 1];
+    $('dName').textContent = t.stop + ' · ' + stops[0].name;
+    $('dStats').innerHTML = esc(fmtDist(dS)) + ' · <b>' + esc(fmtTime(tS)) + '</b> · ' + esc(t.eta) + ' ' + clock(tS);
+    $('nextLine').innerHTML = esc(t.then) + ': <b>' + esc(fin.name) + '</b> · ' + esc(fmtTime(tl)) + ' · ' + esc(t.eta) + ' ' + clock(tl);
+  } else {
+    $('dName').textContent = stops.length ? stops[stops.length - 1].name : '';
+    $('dStats').innerHTML = esc(fmtDist(remain)) + ' · <b>' + esc(fmtTime(tl)) + '</b> · ' + esc(t.eta) + ' ' + clock(tl) +
+      (routeSrc === 'osrm' ? ' · ' + esc(t.noTraffic) : '');
+  }
 
   const said = rt.said[j] || (rt.said[j] = {});
-  if (!said.far && d <= 400 && d > 150){ said.far = true; speak('Через ' + Math.round(d/50)*50 + ' метров ' + lc(textOf(s))); }
-  if (!said.near && d <= 70){ said.near = said.far = true; speak(textOf(s)); }
+  if (!said.far && d <= 400 && d > 150){ said.far = true; const dd = Math.round(d/50)*50; say(l => L[l].inDist(dd, stepText(s, l))); }
+  if (!said.near && d <= 70 && s.act !== 'arrive' && s.act !== 'stop'){ said.near = said.far = true; say(l => stepText(s, l)); }
 }
-
+function adopt(res){
+  let best = res.list[0];
+  res.list.forEach(r => { if (r.duration < best.duration - 1) best = r; });
+  alts = [best]; sel = 0; route = best; routeSrc = res.src; route.seg = 0; route.said = {};
+  drawStops(); drawRoutes(); render();
+  if (pos) updateNav(pos);
+}
 async function reroute(){
+  if (rerouting) return;
+  const my = planSeq;
   rerouting = true; lastReroute = Date.now(); offCount = 0;
-  toast('Перестраиваю маршрут…'); speak('Перестраиваю маршрут');
-  await buildRoute();
+  toast(T().rerouting); say(l => L[l].rerouting);
+  const res = await fetchRoutes(false);
   rerouting = false;
+  if (res && my === planSeq && state === 'nav') adopt(res);
 }
-
+async function refreshRoute(){          // раз в 3 минуты: свежие пробки и более быстрый маршрут
+  if (state !== 'nav' || rerouting || simRunning || routeSrc !== 'yandex' || !pos) return;
+  const my = planSeq, before = lastTl;
+  rerouting = true;
+  const res = await fetchRoutes(true);
+  rerouting = false;
+  if (!res || my !== planSeq || state !== 'nav') return;
+  let best = res.list[0]; res.list.forEach(r => { if (r.duration < best.duration - 1) best = r; });
+  const saved = Math.round((before - best.duration) / 60);
+  adopt(res);
+  if (saved >= 2) toast(T().faster(saved), 5000);
+}
 function arrive(){
-  speak('Вы прибыли'); toast('Вы прибыли: ' + (dest ? dest.name : ''), 5000); stopNav();
+  const name = stops.length ? stops[stops.length - 1].name : '';
+  say(l => L[l].arrive); toast(T().arrivedAt(name), 5000); cancelAll();
 }
 
-/* ================= экран не гаснет (для телефона) ================= */
+/* ================= экран не гаснет ================= */
 let wake = null;
 async function requestWake(){ try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch(e){} }
 function releaseWake(){ try { if (wake) wake.release(); } catch(e){} wake = null; }
+document.addEventListener('visibilitychange', () => { if (state === 'nav' && document.visibilityState === 'visible') requestWake(); });
 
 /* ================= демо-режим (?sim=1) ================= */
-let simTimer = null;
 function startSim(){
   if (!route) return;
   if (state !== 'nav') startNav();
   simRunning = true;
-  const c = route.coords.slice(), v = 14; // ~50 км/ч
+  const c = route.coords.slice(), v = 14;
   let i = 0, f = 0;
   clearInterval(simTimer);
   simTimer = setInterval(() => {
@@ -448,39 +1041,67 @@ function startSim(){
       if (left < rest){ f += left / L_; left = 0; } else { left -= rest; i++; f = 0; }
     }
     const cur = i >= c.length - 1 ? c[c.length-1] : [c[i][0] + (c[i+1][0]-c[i][0])*f, c[i][1] + (c[i+1][1]-c[i][1])*f];
+    const end = i >= c.length - 1;
     onPosition(cur[0], cur[1], 5, v, null);
-    if (i >= c.length - 1) stopSim();
+    if (end) stopSim();
   }, 1000);
 }
 function stopSim(){ clearInterval(simTimer); simTimer = null; simRunning = false; }
 
-/* ================= события ================= */
-$('qBtn').onclick = search;
-$('q').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
-$('q').addEventListener('focus', () => { if (!$('q').value.trim()) showRecent(); });
-$('q').addEventListener('input', () => { if (!$('q').value.trim()) showRecent(); });
-$('go').onclick = startNav;
-$('stop').onclick = stopNav;
-$('demo').onclick = startSim;
-$('zin').onclick = () => map.zoomIn();
-$('zout').onclick = () => map.zoomOut();
-$('center').onclick = () => { setFollow(true); if (pos) map.setView(pos, state === 'nav' ? 17 : 16); else toast('Жду сигнал GPS…'); };
-$('theme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
-$('voice').onclick = () => { voiceOn = !voiceOn; applyVoice(); if (voiceOn) speak('Голос включён'); };
-map.on('dragstart', () => setFollow(false));
+/* ================= приложение: установка, весь экран ================= */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('install').classList.remove('hidden'); });
+$('install').onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch(e){} installEvt = null; $('install').classList.add('hidden'); };
+const standalone = matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone;
+if (standalone || !document.documentElement.requestFullscreen) $('fs').classList.add('hidden');
+$('fs').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => toast(T().noFs));
+};
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-map.on('click', e => {
-  if (state === 'nav') return;
-  hideResults(); $('q').blur();
-  const it = { name:'Точка на карте', addr: e.latlng.lat.toFixed(5) + ', ' + e.latlng.lng.toFixed(5), lat:e.latlng.lat, lng:e.latlng.lng };
-  const b = document.createElement('button');
-  b.className = 'btn green'; b.textContent = 'Поехать сюда';
-  b.onclick = () => { map.closePopup(); setDest(it); };
-  L.popup({ closeButton:false }).setLatLng(e.latlng).setContent(b).openOn(map);
+/* ================= кнопки ================= */
+$('qBtn').onclick = searchEnter;
+$('qCancel').onclick = () => { adding = false; hideResults(); $('q').value = ''; $('q').blur(); render(); };
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') searchEnter(); });
+$('q').addEventListener('focus', () => { if (!$('q').value.trim()) showHome(); });
+$('q').addEventListener('input', () => {
+  const v = $('q').value.trim(); clearTimeout(sugT); lastSug = []; sugSeq++;
+  if (!v){ showHome(); return; }
+  sugT = setTimeout(() => suggest(v), 250);
 });
+$('go').onclick = () => { if (state === 'pick' && pick) choose(pick); else if (state === 'preview') startNav(); };
+$('stop').onclick = cancelAll;
+$('demo').onclick = startSim;
+$('list').onclick = () => { stepsOpen = !stepsOpen; render(); };
+$('star').onclick = () => {
+  const p = state === 'pick' ? pick : stops[stops.length - 1]; if (!p) return;
+  if (favFind(p)){ favRemove(p); toast(T().removed, 1500); render(); } else openSaveDlg(p);
+};
+$('skip').onclick = () => { if (state === 'nav' && stops.length > 1){ stops.shift(); drawStops(); render(); lastReroute = 0; reroute(); } };
+$('zin').onclick = () => { if (state === 'nav' && follow) zoomAdj++; map.setZoom(map.getZoom() + 1, { duration: 200 }); };
+$('zout').onclick = () => { if (state === 'nav' && follow) zoomAdj--; map.setZoom(map.getZoom() - 1, { duration: 200 }); };
+$('center').onclick = () => {
+  setFollow(true);
+  if (!pos){ toast(T().waitGps); return; }
+  zoomAdj = 0; map.setCenter(pos, state === 'nav' ? 17 : 16, { duration: 500 });
+};
+$('traffic').onclick = () => { trafficOn = !trafficOn; applyTraffic(); toast(trafficOn ? T().trafficOn : T().trafficOff, 1200); };
+$('layers').onclick = () => { mtype = (mtype + 1) % 3; applyMapType(); };
+$('theme').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); };
+$('voice').onclick = () => { voiceOn = !voiceOn; applyVoice(); if (voiceOn) say(l => L[l].voiceOn); };
+$('lang').onclick = () => { store.set('lang', LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]); location.reload(); };
 
-applyTheme(); applyVoice(); startGeo();
-if (SIM) toast('Демо-режим: выберите место и нажмите «Демо»', 4000);
+/* ================= загрузка карты ================= */
+/*LOADER*/
+(function(){
+  const sc = document.createElement('script');
+  sc.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + YKEY + '&suggest_apikey=' + YSUGGEST + '&lang=' + API_LANG[lang];
+  sc.onload = () => ymaps.ready(init);
+  sc.onerror = () => toast(T().apiFail, 8000);
+  document.head.appendChild(sc);
+})();
+/*/LOADER*/
 </script>
 </body>
 </html>
