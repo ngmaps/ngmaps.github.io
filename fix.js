@@ -1,7 +1,12 @@
 // NG Maps fix.js — исправления v6 (поиск + диагностика маршрутов). Подключается одной строкой в index.html
 (function(){ const st = document.createElement('style');
   st.textContent = '[class*="-gotoymaps"],[class*="-gototech"]{display:none!important}';
-  document.head.appendChild(st); })();
+  document.head.appendChild(st);
+  const d = document.createElement('div'); d.id = 'diagBox';
+  d.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:60vw;font:12px/1.3 monospace;color:#fff;background:rgba(0,0,0,.65);padding:4px 8px;border-radius:8px;pointer-events:none;word-break:break-all';
+  d.textContent = 'fix.js v6 OK';
+  document.body.appendChild(d); })();
+window.setDiag = function(t){ const d = document.getElementById('diagBox'); if (d) d.textContent = 'fix.js v6 | ' + t; };
 
 function nomSearch(q){
   const c = pos || map.getCenter();
@@ -84,7 +89,7 @@ async function fetchRoutes(yandexOnly){
   const from = pos || map.getCenter();
   const pts = [from].concat(stops.map(s => [s.lat, s.lng]));
   let list, src = 'yandex';
-  window.routeDiag = '';
+  window.routeDiag = ''; setDiag('routing…');
   try { list = await routeMulti(pts); }
   catch(e){
     window.routeDiag = 'multi: ' + (e && e.message || e);
@@ -97,8 +102,8 @@ async function fetchRoutes(yandexOnly){
     }
   }
   if (src === 'osrm' && window.routeDiag){ try { toast('Yandex: ' + String(window.routeDiag).slice(0, 140), 9000); } catch(e){} }
+  setDiag(src === 'osrm' ? 'OSRM (no traffic). ' + String(window.routeDiag).slice(0, 300) : 'Yandex routing OK');
   const names = stops.map(s => s.name);
   list.forEach(r => r.steps.forEach(s => { if (s.act === 'stop') s.name = names[s.n] || ''; }));
   return { list, src };
 }
-
